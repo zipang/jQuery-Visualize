@@ -18,11 +18,15 @@
             console.log("Executing existing chart " + type);
             charts[type]();
 
+        } else if ($.visualize.plugins[type]) {
+            $.visualize.plugins[type].apply(context)();
+
         } else {
-            // try to load new type of chart from a plugin
+            // try to dynamically load a new type of chart from external plugin
             console.log("Trying to load js/jquery.vizualize." + type + ".js");
-            $.getScript("js/jquery.vizualize." + type + ".js", function loaded() {
-                $.vizualize.plugins[type].apply(context)();
+
+            $.getScript("js/jquery.visualize." + type + ".js", function loaded() {
+                $.visualize.plugins[type].apply(context)();
             }).fail(function(jqxhr, settings, exception) {
                 context.target.canvasContainer.remove();
                 throw "Failed to load jquery.vizualize plugin " + type + " : " + exception;
