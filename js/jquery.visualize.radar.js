@@ -31,14 +31,14 @@ $.visualize.plugins.radar = function () {
 
     var labels = $('<ul class="visualize-labels"></ul>').insertAfter(canvas);
 
-    // Draw the axis
+    // Draw the branches of our star shape
     $.each(memberTotals, function (i, total) {
 
         var ratio = total / topValue;
-        var distance = radius * ratio;
+        var distance = radius * ratio / 2;
 
         ctx.beginPath();
-        ctx.lineWidth = 2;
+        ctx.lineWidth = o.lineWeight;
         ctx.lineJoin = 'round';
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(
@@ -47,24 +47,25 @@ $.visualize.plugins.radar = function () {
         );
         ctx.strokeStyle = dataGroups[i].color;
         ctx.stroke();
-        ctx.closePath()
+        ctx.closePath();
     });
 
-    // Draw the surrounding lines
+    // Draw the surrounding form
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.lineJoin = 'round';
     ctx.strokeStyle = o.colors[memberCount];
 
     ctx.moveTo(
-        centerX + radius * memberTotals[0] / topValue,
+        centerX + radius * memberTotals[0] / topValue / 2,
         centerY
     );
 
     $.each(memberTotals, function (i, total) {
 
         var ratio = total / topValue;
-        var distance = radius * ratio;
+        var distance = radius * ratio / 2;
+
         var labelX = centerX + Math.cos(i * area_span) * distance;
         var labelY = centerY + Math.sin(i * area_span) * distance;
         ctx.lineTo(labelX, labelY);
@@ -91,7 +92,7 @@ $.visualize.plugins.radar = function () {
 
         labeltext
             .css('margin-' + leftRight, -labeltext.width() / 2)
-            .css('margin-' + topBottom, -labeltext.outerHeight() / 2)
+            .css('margin-' + topBottom, -labeltext.outerHeight() / 2);
 
     });
 

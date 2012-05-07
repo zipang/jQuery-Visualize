@@ -134,40 +134,7 @@
             });
             return (this._memberTotals = memberTotals);
         },
-        /* UNUSED AND USELESS
-         yTotals: function(){
-         if (this._yTotals) return this._yTotals;
 
-         var yTotals = [];
-         var dataGroups = this.dataGroups();
-         var loopLength = this.xLabels().length;
-         for(var i = 0; i<loopLength; i++){
-         yTotals[i] =[];
-         var thisTotal = 0;
-         $(dataGroups).each(function(l){ // << WTF ??
-         yTotals[i].push(this.points[i]);
-         });
-         yTotals[i].join(',').split(',');
-         $(yTotals[i]).each(function(){
-         thisTotal += parseFloat(this);
-         });
-         yTotals[i] = thisTotal;
-
-         }
-         return (this._yTotals = yTotals);
-         },
-
-         topYtotal: function(){
-         if (this._topYtotal) return this._topYtotal;
-
-         var topYtotal = 0;
-         var yTotals = this.yTotals().join(',').split(',');
-         $(yTotals).each(function(){
-         if(parseFloat(this,10)>topYtotal) topYtotal = parseFloat(this);
-         });
-         return (this._topYtotal = topYtotal);
-         },
-         */
         totalYRange: function(){
             return this.topValue() - this.bottomValue();
         },
