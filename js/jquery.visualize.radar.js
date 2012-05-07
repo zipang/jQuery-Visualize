@@ -47,6 +47,7 @@ $.visualize.plugins.radar = function () {
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.lineJoin = 'round';
+    ctx.strokeStyle = o.colors[memberCount];
 
     ctx.moveTo(
         centerx + radius * memberTotals[0] / topValue,
