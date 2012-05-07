@@ -514,7 +514,8 @@ $.fn.visualize = function(options, container){
 		createChart(charts, o.type, {
             target: {
                 canvasContainer: canvasContain,
-                canvasContext: ctx
+                canvasContext: ctx,
+                canvas: canvas
             },
             data: tableData,
             options: o

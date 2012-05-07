@@ -1,18 +1,19 @@
 $.visualize.plugins.radar = function () {
 
     var o = this.options,
-        canvasContain = this.target.canvasContainer,
+        container = this.target.canvasContainer,
         ctx = this.target.canvasContext,
+        canvas = this.target.canvas,
         dataGroups = this.data.dataGroups,
         memberCount = this.data.memberCount,
         memberTotals = this.data.memberTotals,
         topValue = this.data.topValue;
 
 
-    canvasContain.addClass('visualize-pie');
+    container.addClass('visualize-pie');
 
     if (o.pieLabelPos == 'outside') {
-        canvasContain.addClass('visualize-pie-outside');
+        container.addClass('visualize-pie-outside');
     }
 
     var centerx = Math.round(canvas.width() / 2);
