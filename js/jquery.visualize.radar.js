@@ -5,7 +5,7 @@ $.visualize.plugins.radar = function () {
         ctx = this.target.canvasContext,
         canvas = this.target.canvas,
         dataGroups = this.data.dataGroups(),
-        memberCount = dataGroups.length(),
+        memberCount = dataGroups.length,
         memberTotals = this.data.memberTotals(),
         topValue = this.data.topValue();
 
