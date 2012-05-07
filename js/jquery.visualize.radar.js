@@ -1,3 +1,10 @@
+/**
+ * Radar charts for the jquery Visualize plugin 2.0
+ *
+ * Data are represented by a star shaped form whose branches
+ * are equal to the total value of each serie
+ * Doesn't work very well if there is less than 3 members in the serie.
+ */
 $.visualize.plugins.radar = function () {
 
     var o = this.options,
