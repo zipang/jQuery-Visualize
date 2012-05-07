@@ -4,10 +4,10 @@ $.visualize.plugins.radar = function () {
         container = this.target.canvasContainer,
         ctx = this.target.canvasContext,
         canvas = this.target.canvas,
-        dataGroups = this.data.dataGroups,
-        memberCount = this.data.memberCount,
-        memberTotals = this.data.memberTotals,
-        topValue = this.data.topValue;
+        dataGroups = this.data.dataGroups(),
+        memberCount = dataGroups.length(),
+        memberTotals = this.data.memberTotals(),
+        topValue = this.data.topValue();
 
 
     container.addClass('visualize-pie');
