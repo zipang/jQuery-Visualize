@@ -25,7 +25,7 @@
             // try to dynamically load a new type of chart from external plugin
             console.log("Trying to load jquery.vizualize." + type + ".js");
 
-            $.getScript("./jquery.visualize." + type + ".js", function loaded() {
+            $.getScript("./js/jquery.visualize." + type + ".js", function loaded() {
                 $.visualize.plugins[type].apply(context);
             }).fail(function(jqxhr, settings, exception) {
                 context.target.canvasContainer.remove();
