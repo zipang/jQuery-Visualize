@@ -20,14 +20,14 @@ $.visualize.plugins.radar = function () {
     var centery = Math.round(canvas.height() / 2);
 
     var area_span = Math.PI * 2 / memberCount;
-    var radius = (centery < centerx ? centery : centerx);// - o.pieMargin;
+    var radius = (centery < centerx ? centery : centerx) - o.pieMargin;
 
     var labels = $('<ul class="visualize-labels"></ul>').insertAfter(canvas);
 
     // Draw the axis
     $.each(memberTotals, function (i, total) {
 
-        var ratio = (total <= 0 || isNaN(total)) ? 0 : total / topValue;
+        var ratio = total / topValue;
         var distance = radius * ratio;
 
         ctx.beginPath();
