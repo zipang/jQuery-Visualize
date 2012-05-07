@@ -1,14 +1,212 @@
 /*
  * --------------------------------------------------------------------
- * jQuery inputToButton plugin
+ * jQuery Visualize plugin
  * Author: Scott Jehl, scott@filamentgroup.com
  * Copyright (c) 2009 Filament Group 
  * licensed under MIT (filamentgroup.com/examples/mit-license.txt)
  * --------------------------------------------------------------------
 */
-(function($) { 
+(function($) {
+
+    $.visualize = {
+        plugins: {} // additional chart scripts will load inside this namespace
+    };
+
+    function createChart(charts, type, context) {
+
+        if (charts[type]) {
+            console.log("Executing existing chart " + type);
+            charts[type]();
+
+        } else {
+            // try to load new type of chart from a plugin
+            console.log("Trying to load js/jquery.vizualize." + type + ".js");
+            $.getScript("js/jquery.vizualize." + type + ".js", function loaded() {
+                $.vizualize.plugins[type].apply(context)();
+            }).fail(function(jqxhr, settings, exception) {
+                context.target.canvasContainer.remove();
+                throw "Failed to load jquery.vizualize plugin " + type + " : " + exception;
+            });
+        }
+    }
+
+    // Table data scrapper object
+    function TableData(table, options) {
+        this.table = $(table);
+        this.options = options;
+    }
+
+    TableData.prototype = {
+
+        dataGroups: function(){
+            if (this._dataGroups) return this._dataGroups; // stored result
+
+            var dataGroups = [];
+            var colors = this.options.colors,
+                textColors = this.options.textColors,
+                rowFilter = this.options.rowFilter,
+                colFilter = this.options.colFilter;
+
+            if(this.options.parseDirection == 'x'){
+                this.table.find('tr:gt(0)').filter(rowFilter).each(function(i, tr){
+                    dataGroups[i] = {};
+                    dataGroups[i].points = [];
+                    dataGroups[i].color = colors[i];
+                    if(textColors[i]){ dataGroups[i].textColor = textColors[i]; }
+                    $(tr).find('td').filter(colFilter).each(function(){
+                        dataGroups[i].points.push( parseFloat($(this).text()) );
+                    });
+                });
+            }
+            else {
+                var cols = this.table.find('tr:eq(1) td').filter(colFilter).size();
+                for(var i=0; i<cols; i++){
+                    dataGroups[i] = {};
+                    dataGroups[i].points = [];
+                    dataGroups[i].color = colors[i];
+                    if(textColors[i]){ dataGroups[i].textColor = textColors[i]; }
+                    this.table.find('tr:gt(0)').filter(rowFilter).each(function(){
+                        dataGroups[i].points.push( $(this).find('td').filter(colFilter).eq(i).text()*1 );
+                    });
+                }
+            }
+            return (this._dataGroups = dataGroups);
+        },
+
+        allData: function(){
+            if (this._allData) return this._allData;
+
+            var allData = [];
+            $(this.dataGroups()).each(function(){
+                allData.push(this.points);
+            });
+            return (this._allData = allData);
+        },
+
+        dataSum: function(){
+            if (this._dataSum) return this._dataSum;
+
+            var dataSum = 0;
+            var allData = this.allData().join(',').split(','); // remove blank values
+            $(allData).each(function(){
+                dataSum += parseFloat(this);
+            });
+            return (this._dataSum = dataSum);
+        },
+
+        topValue: function(){
+            if (this._topValue) return this._topValue;
+
+            var topValue = 0;
+            var allData = this.allData().join(',').split(','); // remove blank values
+            $(allData).each(function(){
+                if(parseFloat(this,10)>topValue) topValue = parseFloat(this);
+            });
+            return (this._topValue = topValue);
+        },
+
+        bottomValue: function(){
+            if (this._bottomValue) return this._bottomValue;
+
+            var bottomValue = 0;
+            var allData = this.allData().join(',').split(',');
+            $(allData).each(function(i, val){
+                if(val<bottomValue) bottomValue = parseFloat(val);
+            });
+            return (this._bottomValue = bottomValue);
+        },
+
+        memberTotals: function(){
+            if (this._memberTotals) return this._memberTotals;
+
+            var memberTotals = [];
+            var dataGroups = this.dataGroups();
+            $(dataGroups).each(function(l){
+                var count = 0;
+                $(dataGroups[l].points).each(function(m){
+                    count +=dataGroups[l].points[m];
+                });
+                memberTotals.push(count);
+            });
+            return (this._memberTotals = memberTotals);
+        },
+        /* UNUSED AND USELESS
+         yTotals: function(){
+         if (this._yTotals) return this._yTotals;
+
+         var yTotals = [];
+         var dataGroups = this.dataGroups();
+         var loopLength = this.xLabels().length;
+         for(var i = 0; i<loopLength; i++){
+         yTotals[i] =[];
+         var thisTotal = 0;
+         $(dataGroups).each(function(l){ // << WTF ??
+         yTotals[i].push(this.points[i]);
+         });
+         yTotals[i].join(',').split(',');
+         $(yTotals[i]).each(function(){
+         thisTotal += parseFloat(this);
+         });
+         yTotals[i] = thisTotal;
+
+         }
+         return (this._yTotals = yTotals);
+         },
+
+         topYtotal: function(){
+         if (this._topYtotal) return this._topYtotal;
+
+         var topYtotal = 0;
+         var yTotals = this.yTotals().join(',').split(',');
+         $(yTotals).each(function(){
+         if(parseFloat(this,10)>topYtotal) topYtotal = parseFloat(this);
+         });
+         return (this._topYtotal = topYtotal);
+         },
+         */
+        totalYRange: function(){
+            return this.topValue() - this.bottomValue();
+        },
+
+        xLabels: function(){
+            if (this._xLabels) return this._xLabels;
+
+            var xLabels = [];
+            if(this.options.parseDirection == 'x'){ // parse the column headers
+                this.table.find('tr:eq(0) th').filter(this.options.colFilter).each(function(i, th){
+                    xLabels.push($(th).html());
+                });
+            }
+            else {
+                this.table.find('tr:gt(0) th').filter(this.options.rowFilter).each(function(i, th){
+                    xLabels.push($(th).html());
+                });
+            }
+            return (this._xLabels = xLabels);
+        },
+
+        yLabels : function() {
+            if (this._yLabels) return this._yLabels;
+
+            var bottomValue = this.bottomValue(),
+                topValue = this.topValue(),
+                totalYRange = topValue - bottomValue,
+                yLabels = [];
+            yLabels.push(bottomValue);
+            var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
+            var loopInterval = Math.ceil(totalYRange / numLabels) || 1;
+            while( yLabels[yLabels.length-1] < topValue - loopInterval){
+                yLabels.push(yLabels[yLabels.length-1] + loopInterval);
+            }
+            yLabels.push(topValue);
+            return (this._yLabels = yLabels);
+        }
+    }; // TableData prototype
+
 $.fn.visualize = function(options, container){
+
 	return $(this).each(function(){
+
 		//configuration
 		var o = $.extend({
 			type: 'bar', //also available: area, pie, line
@@ -32,150 +230,13 @@ $.fn.visualize = function(options, container){
 		},options);
 		
 		//reset width, height to numbers
-		o.width = parseFloat(o.width);
+		o.width  = parseFloat(o.width);
 		o.height = parseFloat(o.height);
-		
-		
+
 		var self = $(this);
-		
-		//function to scrape data from html table
-		function scrapeTable(){
-			var colors = o.colors;
-			var textColors = o.textColors;
-			var tableData = {
-				dataGroups: function(){
-					var dataGroups = [];
-					if(o.parseDirection == 'x'){
-						self.find('tr:gt(0)').filter(o.rowFilter).each(function(i){
-							dataGroups[i] = {};
-							dataGroups[i].points = [];
-							dataGroups[i].color = colors[i];
-							if(textColors[i]){ dataGroups[i].textColor = textColors[i]; }
-							$(this).find('td').filter(o.colFilter).each(function(){
-								dataGroups[i].points.push( parseFloat($(this).text()) );
-							});
-						});
-					}
-					else {
-						var cols = self.find('tr:eq(1) td').filter(o.colFilter).size();
-						for(var i=0; i<cols; i++){
-							dataGroups[i] = {};
-							dataGroups[i].points = [];
-							dataGroups[i].color = colors[i];
-							if(textColors[i]){ dataGroups[i].textColor = textColors[i]; }
-							self.find('tr:gt(0)').filter(o.rowFilter).each(function(){
-								dataGroups[i].points.push( $(this).find('td').filter(o.colFilter).eq(i).text()*1 );
-							});
-						};
-					}
-					return dataGroups;
-				},
-				allData: function(){
-					var allData = [];
-					$(this.dataGroups()).each(function(){
-						allData.push(this.points);
-					});
-					return allData;
-				},
-				dataSum: function(){
-					var dataSum = 0;
-					var allData = this.allData().join(',').split(',');
-					$(allData).each(function(){
-						dataSum += parseFloat(this);
-					});
-					return dataSum
-				},	
-				topValue: function(){
-						var topValue = 0;
-						var allData = this.allData().join(',').split(',');
-						$(allData).each(function(){
-							if(parseFloat(this,10)>topValue) topValue = parseFloat(this);
-						});
-						return topValue;
-				},
-				bottomValue: function(){
-						var bottomValue = 0;
-						var allData = this.allData().join(',').split(',');
-						$(allData).each(function(){
-							if(this<bottomValue) bottomValue = parseFloat(this);
-						});
-						return bottomValue;
-				},
-				memberTotals: function(){
-					var memberTotals = [];
-					var dataGroups = this.dataGroups();
-					$(dataGroups).each(function(l){
-						var count = 0;
-						$(dataGroups[l].points).each(function(m){
-							count +=dataGroups[l].points[m];
-						});
-						memberTotals.push(count);
-					});
-					return memberTotals;
-				},
-				yTotals: function(){
-					var yTotals = [];
-					var dataGroups = this.dataGroups();
-					var loopLength = this.xLabels().length;
-					for(var i = 0; i<loopLength; i++){
-						yTotals[i] =[];
-						var thisTotal = 0;
-						$(dataGroups).each(function(l){
-							yTotals[i].push(this.points[i]);
-						});
-						yTotals[i].join(',').split(',');
-						$(yTotals[i]).each(function(){
-							thisTotal += parseFloat(this);
-						});
-						yTotals[i] = thisTotal;
-						
-					}
-					return yTotals;
-				},
-				topYtotal: function(){
-					var topYtotal = 0;
-						var yTotals = this.yTotals().join(',').split(',');
-						$(yTotals).each(function(){
-							if(parseFloat(this,10)>topYtotal) topYtotal = parseFloat(this);
-						});
-						return topYtotal;
-				},
-				totalYRange: function(){
-					return this.topValue() - this.bottomValue();
-				},
-				xLabels: function(){
-					var xLabels = [];
-					if(o.parseDirection == 'x'){
-						self.find('tr:eq(0) th').filter(o.colFilter).each(function(){
-							xLabels.push($(this).html());
-						});
-					}
-					else {
-						self.find('tr:gt(0) th').filter(o.rowFilter).each(function(){
-							xLabels.push($(this).html());
-						});
-					}
-					return xLabels;
-				},
-				yLabels: function(){
-					var yLabels = [];
-					yLabels.push(bottomValue); 
-					var numLabels = Math.round(o.height / o.yLabelInterval);
-					var loopInterval = Math.ceil(totalYRange / numLabels) || 1;
-					while( yLabels[yLabels.length-1] < topValue - loopInterval){
-						yLabels.push(yLabels[yLabels.length-1] + loopInterval); 
-					}
-					yLabels.push(topValue); 
-					return yLabels;
-				}			
-			};
-			
-			return tableData;
-		};
-		
-		
+
 		//function to create a chart
-		var createChart = {
+		var charts = {
 			pie: function(){	
 				
 				canvasContain.addClass('visualize-pie');
@@ -310,7 +371,7 @@ $.fn.visualize = function(options, container){
 			},
 			
 			area: function(){
-				createChart.line(true);
+				this.line(true);
 			},
 			
 			bar: function(){
@@ -395,7 +456,8 @@ $.fn.visualize = function(options, container){
 			.append(canvas);
 
 		//scrape table (this should be cleaned up into an obj)
-		var tableData = scrapeTable();
+		var tableData = new TableData(self, o);
+
 		var dataGroups = tableData.dataGroups();
 		var allData = tableData.allData();
 		var dataSum = tableData.dataSum();
@@ -418,7 +480,6 @@ $.fn.visualize = function(options, container){
 			$('<div class="visualize-title">'+ title +'</div>').appendTo(infoContain);
 		}
 		
-		
 		//append key
 		if(o.appendKey){
 			var newKey = $('<ul class="visualize-key"></ul>');
@@ -435,7 +496,7 @@ $.fn.visualize = function(options, container){
 					.appendTo(newKey);
 			});
 			newKey.appendTo(infoContain);
-		};		
+		}
 		
 		//append new canvas to page
 		
@@ -446,7 +507,14 @@ $.fn.visualize = function(options, container){
 		var ctx = canvas[0].getContext('2d');
 		
 		//create chart
-		createChart[o.type]();
+		createChart(charts, o.type, {
+            target: {
+                canvasContainer: canvasContain,
+                canvasContext: ctx
+            },
+            data: tableData,
+            options: o
+        });
 		
 		//clean up some doubled lines that sit on top of canvas borders (done via JS due to IE)
 		$('.visualize-line li:first-child span.line, .visualize-line li:last-child span.line, .visualize-area li:first-child span.line, .visualize-area li:last-child span.line, .visualize-bar li:first-child span.line,.visualize-bar .visualize-labels-y li:last-child span.line').css('border','none');
