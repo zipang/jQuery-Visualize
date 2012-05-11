@@ -4,7 +4,7 @@
  * Data are represented by a colored portions in a vertival bar.
  * The data can be normalized to a 0..100 scale so that each serie can be easily compared.
  */
-(function closure() {
+(function define() {
 
     $.visualize.plugins.pilebar = function () {
 
@@ -21,25 +21,11 @@
             ctx = this.target.canvasContext,
             canvas = this.target.canvas,
             dataGroups = this.data.dataGroups(),
-            groupSums = this.data.groupSums(),
             xLabels = this.data.xLabels(),
-            yLabels = (normalized ? this.data.yLabels100() : this.data.yLabels()),
-            topValue = this.data.topValue(),
-            totalYRange = topValue - this.data.bottomValue();
-/*
-        var dataGroups = tableData.dataGroups();
-        var groupSums = tableData.groupSums();
-        var allData = tableData.allData();
-        var dataSum = tableData.dataSum();
-        var topValue = tableData.topValue(o.type); //o.type
-        var bottomValue = tableData.bottomValue(o.type); //o.type
-        var memberTotals = tableData.memberTotals();
-        var memberCount = tableData.memberCount();
-        var totalYRange = tableData.totalYRange(o.type);
-        var zeroLoc = o.height * (topValue/totalYRange);
-        var xLabels = tableData.xLabels();
-        var yLabels = tableData.yLabels(o.type);
-*/
+            groupSums = this.data.groupSums(),
+            totalYRange = Array.max(groupSums);
+            yLabels = (normalized ? this.data.yLabels100() : this.data.yLabels(0, totalYRange)),
+
         container.addClass("visualize-bar");
 
         // Create X labels

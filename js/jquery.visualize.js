@@ -131,12 +131,8 @@
 
             var memberTotals = [];
             var dataGroups = this.dataGroups();
-            $(dataGroups).each(function(l){
-                var count = 0;
-                $(dataGroups[l].points).each(function(m){
-                    count +=dataGroups[l].points[m];
-                });
-                memberTotals.push(count);
+            $.each(dataGroups, function(i, group) {
+                memberTotals.push(Array.sum(group.points));
             });
             return (this._memberTotals = memberTotals);
         },
@@ -177,36 +173,29 @@
             return (this._xLabels = xLabels);
         },
 
-        yLabels : function() {
-            if (this._yLabels) return this._yLabels;
-
-            var bottomValue = this.bottomValue(),
-                topValue = this.topValue(),
-                totalYRange = topValue - bottomValue,
+        yLabels : function(start, end) {
+            var totalYRange = end - start,
                 labels = [];
-            labels.push(bottomValue);
+            labels.push(start);
             var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
             var incr = Math.ceil(totalYRange / numLabels) || 1;
-            while( labels[labels.length-1] < topValue - incr){
+            while( labels[labels.length-1] < end - incr){
                 labels.push(labels[labels.length-1] + incr);
             }
-            labels.push(topValue);
-            return (this._yLabels = labels);
+            labels.push(end);
+            return labels;
         },
         
         yLabels100 : function() {
             if (this._yLabels100) return this._yLabels100;
 
-            var bottomValue = this.bottomValue(),
-                topValue = this.topValue(),
-                labels = [];
-            labels.push(bottomValue);
+            var labels = [0];
             var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
             var incr = Math.ceil(100 / numLabels) || 1;
             while( labels[labels.length-1] < 100 - incr){
                 labels.push(labels[labels.length-1] + incr);
             }
-            labels.push(topValue);
+            labels.push(100);
             return (this._yLabels100 = labels);            
         }
     }; // TableData prototype
@@ -475,7 +464,7 @@ $.fn.visualize = function(options, container){
 		var totalYRange = tableData.totalYRange();
 		var zeroLoc = o.height * (topValue/totalYRange);
 		var xLabels = tableData.xLabels();
-		var yLabels = tableData.yLabels();
+		var yLabels = tableData.yLabels(bottomValue, topValue);
 								
 		//title/key container
 		if(o.appendTitle || o.appendKey){
