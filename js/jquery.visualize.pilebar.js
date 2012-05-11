@@ -73,22 +73,21 @@
 
         // Start from the bottom left
         var updatedZeroLoc = [];
+
         for (var h=0; h<dataGroups.length; h++){ // series
             ctx.beginPath();
             var linewidth = (xInterval-o.barGroupMargin*2) ;// removed / dataGroups.length; // removed +1
             var strokeWidth = linewidth - (o.barMargin*2);
             ctx.lineWidth = strokeWidth;
+            ctx.strokeStyle = dataGroups[h].color;
             var points = dataGroups[h].points;
             var integer = 0;
+
             for(var i=0; i<points.length; i++){
                 if ( typeof(updatedZeroLoc[i])=='undefined' ) updatedZeroLoc[i]=o.height ;
-                // var xVal = (integer-o.barGroupMargin)+(h*linewidth)+linewidth/2;
-                var xVal = (integer-o.barGroupMargin)/* +(h*linewidth) */+linewidth/2;
+                var xVal = (integer-o.barGroupMargin) + linewidth/2;
                 xVal += o.barGroupMargin*2;
 
-                /* alert(xVal);
-                 alert(Math.round(-points[i]*yScale));	 */
-                // ctx.moveTo(xVal, zeroLoc);
                 ctx.moveTo(xVal, updatedZeroLoc[i]);
 
                 updatedZeroLoc[i] += Math.round(-points[i]*yScale*(normalized ? 100 / groupSums[i] : 1));
@@ -100,7 +99,6 @@
 
                 integer+=xInterval;
             }
-            ctx.strokeStyle = dataGroups[h].color;
             ctx.stroke();
             ctx.closePath();
         }
