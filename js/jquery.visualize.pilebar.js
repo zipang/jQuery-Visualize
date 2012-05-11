@@ -8,11 +8,11 @@
 
     $.visualize.plugins.pilebar = function () {
 
-        drawPile.apply(this, [false]);
+        drawPile.call(this, false);
     };
     $.visualize.plugins.pilebar100 = function () {
 
-        drawPile.apply(this, [true]);
+        drawPile.call(this, true);
     };
 
     function drawPile(normalized) {

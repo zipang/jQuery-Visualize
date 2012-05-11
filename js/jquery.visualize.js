@@ -23,7 +23,7 @@
         var len = (arr && arr.length ? arr.length : 0), sum = 0, val;
         for (var i = 0; i < len; i++) {
             val = parseFloat(arr[i]);
-            sum += ((val == NaN) ? 0 : val);
+            sum += ((!arr[i] || isNaN(arr[i])) ? 0 : val);
         }
         return sum;
     };
@@ -103,7 +103,7 @@
 
             var allData = [];
             $(this.dataGroups()).each(function(){
-                allData.push(this.points);
+                allData.push.apply(allData, this.points);
             });
             return (this._allData = allData);
         },
@@ -111,34 +111,19 @@
         dataSum: function(){
             if (this._dataSum) return this._dataSum;
 
-            /*var dataSum = 0;
-            var allData = this.allData().join(',').split(','); // remove blank values
-            $(allData).each(function(){
-                dataSum += parseFloat(this);
-            });*/
             return (this._dataSum = Array.sum(this.allData()));
         },
 
         topValue: function(){
             if (this._topValue) return this._topValue;
 
-            var topValue = 0;
-            var allData = this.allData().join(',').split(','); // remove blank values
-            $(allData).each(function(){
-                if(parseFloat(this,10)>topValue) topValue = parseFloat(this);
-            });
-            return (this._topValue = topValue);
+            return (this._topValue = Array.max(this.allData()));
         },
 
         bottomValue: function(){
             if (this._bottomValue) return this._bottomValue;
 
-            var bottomValue = 0;
-            var allData = this.allData().join(',').split(',');
-            $(allData).each(function(i, val){
-                if(val<bottomValue) bottomValue = parseFloat(val);
-            });
-            return (this._bottomValue = bottomValue);
+            return (this._bottomValue = Array.min(this.allData()));
         },
 
         memberTotals: function(){
