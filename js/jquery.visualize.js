@@ -195,15 +195,31 @@
             var bottomValue = this.bottomValue(),
                 topValue = this.topValue(),
                 totalYRange = topValue - bottomValue,
-                yLabels = [];
-            yLabels.push(bottomValue);
+                labels = [];
+            labels.push(bottomValue);
             var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
-            var loopInterval = Math.ceil(totalYRange / numLabels) || 1;
-            while( yLabels[yLabels.length-1] < topValue - loopInterval){
-                yLabels.push(yLabels[yLabels.length-1] + loopInterval);
+            var incr = Math.ceil(totalYRange / numLabels) || 1;
+            while( labels[labels.length-1] < topValue - incr){
+                labels.push(labels[labels.length-1] + incr);
             }
-            yLabels.push(topValue);
-            return (this._yLabels = yLabels);
+            labels.push(topValue);
+            return (this._yLabels = labels);
+        },
+        
+        yLabels100 : function() {
+            if (this._yLabels100) return this._yLabels100;
+
+            var bottomValue = this.bottomValue(),
+                topValue = this.topValue(),
+                labels = [];
+            labels.push(bottomValue);
+            var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
+            var incr = Math.ceil(100 / numLabels) || 1;
+            while( labels[labels.length-1] < 100 - incr){
+                labels.push(labels[labels.length-1] + incr);
+            }
+            labels.push(topValue);
+            return (this._yLabels100 = labels);            
         }
     }; // TableData prototype
 
