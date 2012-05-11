@@ -23,9 +23,9 @@
 
         } else {
             // try to dynamically load a new type of chart from external plugin
-            console.log("Trying to load js/jquery.vizualize." + type + ".js");
+            console.log("Trying to load jquery.vizualize." + type + ".js");
 
-            $.getScript("js/jquery.visualize." + type + ".js", function loaded() {
+            $.getScript("./js/jquery.visualize." + type + ".js", function loaded() {
                 $.visualize.plugins[type].apply(context);
             }).fail(function(jqxhr, settings, exception) {
                 context.target.canvasContainer.remove();
@@ -134,40 +134,7 @@
             });
             return (this._memberTotals = memberTotals);
         },
-        /* UNUSED AND USELESS
-         yTotals: function(){
-         if (this._yTotals) return this._yTotals;
 
-         var yTotals = [];
-         var dataGroups = this.dataGroups();
-         var loopLength = this.xLabels().length;
-         for(var i = 0; i<loopLength; i++){
-         yTotals[i] =[];
-         var thisTotal = 0;
-         $(dataGroups).each(function(l){ // << WTF ??
-         yTotals[i].push(this.points[i]);
-         });
-         yTotals[i].join(',').split(',');
-         $(yTotals[i]).each(function(){
-         thisTotal += parseFloat(this);
-         });
-         yTotals[i] = thisTotal;
-
-         }
-         return (this._yTotals = yTotals);
-         },
-
-         topYtotal: function(){
-         if (this._topYtotal) return this._topYtotal;
-
-         var topYtotal = 0;
-         var yTotals = this.yTotals().join(',').split(',');
-         $(yTotals).each(function(){
-         if(parseFloat(this,10)>topYtotal) topYtotal = parseFloat(this);
-         });
-         return (this._topYtotal = topYtotal);
-         },
-         */
         totalYRange: function(){
             return this.topValue() - this.bottomValue();
         },
