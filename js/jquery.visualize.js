@@ -12,6 +12,27 @@
         plugins: {} // additional chart scripts will load inside this namespace
     };
 
+    // UTILITIES
+    Array.max = function(arr) {
+        return Math.max.apply(Array, arr);
+    };
+    Array.min = function(arr) {
+        return Math.min.apply(Array, arr);
+    };
+    Array.sum = function(arr) {
+        var len = (arr && arr.length ? arr.length : 0), sum = 0, val;
+        for (var i = 0; i < len; i++) {
+            val = parseFloat(arr[i]);
+            sum += ((val == NaN) ? 0 : val);
+        }
+        return sum;
+    };
+    Array.avg = function(arr) {
+        var len = (arr && arr.length ? arr.length : 0);
+        return (len ? Array.sum(arr)/len : 0);
+    };
+
+
     function createChart(charts, type, context) {
 
         if (charts[type]) {
@@ -90,12 +111,12 @@
         dataSum: function(){
             if (this._dataSum) return this._dataSum;
 
-            var dataSum = 0;
+            /*var dataSum = 0;
             var allData = this.allData().join(',').split(','); // remove blank values
             $(allData).each(function(){
                 dataSum += parseFloat(this);
-            });
-            return (this._dataSum = dataSum);
+            });*/
+            return (this._dataSum = Array.sum(this.allData()));
         },
 
         topValue: function(){
@@ -133,6 +154,21 @@
                 memberTotals.push(count);
             });
             return (this._memberTotals = memberTotals);
+        },
+
+        groupSums: function() {
+            if (this._groupSums) return this._groupSums;
+
+            var groupSums = [];
+            var dataGroups = this.dataGroups();
+            for(var h=0; h<dataGroups.length; h++){
+                var points = dataGroups[h].points;
+                for(var i=0; i<points.length; i++){
+                    if ( typeof(groupSums[i])=='undefined' ) groupSums[i]=0;
+                    groupSums[i] += parseFloat(points[i]);
+                }
+            }
+            return (this._groupSums = groupSums);
         },
 
         totalYRange: function(){

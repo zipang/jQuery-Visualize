@@ -21,6 +21,7 @@
             ctx = this.target.canvasContext,
             canvas = this.target.canvas,
             dataGroups = this.data.dataGroups(),
+            groupSums = this.data.groupSums(),
             xLabels = this.data.xLabels(),
             yLabels = (normalized ? this.data.yLabels100() : this.data.yLabels()),
             topValue = this.data.topValue(),
@@ -104,7 +105,7 @@
                 // ctx.moveTo(xVal, zeroLoc);
                 ctx.moveTo(xVal, updatedZeroLoc[i]);
 
-                updatedZeroLoc[i] += Math.round(-points[i]*yScale*(normalized?100/groupSums[i]:1));
+                updatedZeroLoc[i] += Math.round(-points[i]*yScale*(normalized ? 100 / groupSums[i] : 1));
                 ctx.lineTo(
                     xVal
                     , updatedZeroLoc[i]
