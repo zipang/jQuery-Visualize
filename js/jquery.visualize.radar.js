@@ -7,67 +7,67 @@
  */
 $.visualize.plugins.radar = function () {
 
-    var o = this.options,
+    var options = this.options,
         container = this.target.canvasContainer,
         ctx = this.target.canvasContext,
         canvas = this.target.canvas,
-        dataGroups = this.data.dataGroups(),
-        memberCount = dataGroups.length,
-        memberTotals = this.data.memberTotals(),
-        topValue = this.data.topValue();
+        data = this.data;
 
 
     container.addClass('visualize-pie');
 
-    if (o.pieLabelPos == 'outside') {
+    if (options.pieLabelPos == 'outside') {
         container.addClass('visualize-pie-outside');
     }
 
-    var centerX = Math.round(canvas.width() / 2);
-    var centerY = Math.round(canvas.height() / 2);
+		var max = data.series.lines.max();
+		var radius = max + options.pieMargin;
 
-    var area_span = Math.PI * 2 / memberCount;
-    var radius = (centerY < centerX ? centerY : centerX) - o.pieMargin;
+		// Tell the drawing area (canvas) to be the center of a cicrcle with the given radius
+		var tx = this.target.setWindow(-radius, radius, -radius, radius);  
+		ctx.setTransformation(tx);
 
-    var labels = $('<ul class="visualize-labels"></ul>').insertAfter(canvas);
+    var area_span = Math.PI * 2 / this.data.series.lines.count();
+
 
     // Draw the branches of our star shape
-    $.each(memberTotals, function (i, total) {
+    $.each(data.series.lines, function (i, line) {
 
-        var ratio = total / topValue;
-        var distance = radius * ratio / 2;
+        var l = line.sum();
 
         ctx.beginPath();
-        ctx.lineWidth = o.lineWeight;
+        ctx.lineWidth = options.lineWeight;
         ctx.lineJoin = 'round';
-        ctx.moveTo(centerX, centerY);
+        ctx.moveTo(0, 0);
         ctx.lineTo(
-            centerX + Math.cos(i * area_span) * distance,
-            centerY + Math.sin(i * area_span) * distance
+            l * Math.cos(i * area_span),
+            l * Math.sin(i * area_span)
         );
-        ctx.strokeStyle = dataGroups[i].color;
+        ctx.strokeStyle = options.colors[i];
         ctx.stroke();
         ctx.closePath();
     });
 
     // Draw the surrounding form
+    var labels = $('<ul class="visualize-labels"></ul>').insertAfter(canvas);
+
     ctx.beginPath();
     ctx.lineWidth = 1;
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = o.colors[memberCount];
+    ctx.strokeStyle = options.colors[memberCount];
 
     ctx.moveTo(
         centerX + radius * memberTotals[0] / topValue / 2,
         centerY
     );
 
-    $.each(memberTotals, function (i, total) {
+    $.each(data.series.lines, function (i, line) {
 
-        var ratio = total / topValue;
-        var distance = radius * ratio / 2;
+        var ratio = line.sum() / max;
+        var l = radius * ratio;
 
-        var labelX = centerX + Math.cos(i * area_span) * distance;
-        var labelY = centerY + Math.sin(i * area_span) * distance;
+        var labelX = l * Math.cos(i * area_span);
+        var labelY = l * Math.sin(i * area_span);
         ctx.lineTo(labelX, labelY);
 
         // draw labels
@@ -78,11 +78,11 @@ $.visualize.plugins.radar = function () {
 
         var labeltext = $("<span>")
             .addClass("visualize-label")
-            .html(total)
+            .html(line.sum())
             .css(leftRight, 0)
             .css(topBottom, 0)
             .css('font-size', radius / 8)
-            .css('color', dataGroups[i].color);
+            .css('color', options.colors[i});
 
         $("<li>")
             .addClass("visualize-label-pos")

@@ -3,10 +3,8 @@
  * User: christophe
  * Date: 14/05/12
  * Time: 12:38
- * To change this template use File | Settings | File Templates.
  */
 (function($) {
-
 
 // UTILITIES
 Array.max = function(arr) {
@@ -49,7 +47,7 @@ function Stats(stats) {
         this.table = $(stats);
         $.extend(this, scrapeTable(this.table));
     } else {
-        $.extend(this, stats);
+        $.extend(this, defaultSelf, stats);
     }
 }
 
@@ -63,6 +61,133 @@ Stats.prototype = {
 };
 
 
+var defaults = {
+		type: 'bar', //also available: area, pie, line
+		width: $(this).width(), //height of canvas - defaults to table height
+		height: $(this).height(), //height of canvas - defaults to table height
+
+		appendTitle: true, //table caption text is added to chart
+		title: null, //grabs from table caption if null
+		appendKey: true, //color key is added to chart
+
+		rowFilter: ' ',
+		colFilter: ' ',
+
+		colors: ['#be1e2d','#666699','#92d5ea','#ee8310','#8d10ee','#5a3b16','#26a4ed','#f45a90','#e9e744'],
+		textColors: [], //corresponds with colors array. null/undefined items will fall back to CSS
+
+		parseDirection: 'x', //which direction to parse the table data
+		lineWeight: 4, //for line and area - stroke weight
+		yLabelInterval: 30, //distance between y labels
+
+		pieMargin: 20, //pie charts only - spacing around pie
+		pieLabelsAsPercent: true,
+		pieLabelPos: 'inside',
+
+		barGroupMargin: 10,
+		barMargin: 1  //space around bars in bar chart (added to both sides of bar)
+};
+
+$.visualize = function(rawData, opts) {
+
+	var options = $.extend({}, defaults, opts);
+	var stats = new Stats(rawData);
+
+	//create new canvas, set w&h attrs (not inline styles)
+	var canvas = $("<canvas>")
+		.height(options.height)
+		.width(options.width);
+
+	//create canvas wrapper div, set inline w&h, append
+	var canvasContain = (options.container || 
+		$("<div>")
+			.addClass("visualize")
+			.attr("role", "img")
+			.attr("aria-label", "Graph for " + stats.title)
+			.height(options.height).width(options.width))
+		.append(canvas);
+
+	//title/key container
+	if (options.appendTitle || options.appendKey) {
+
+		var infoContainer = $('<div class="visualize-info"></div>')
+			.appendTo(canvasContain);
+
+		//append title
+		if (options.appendTitle) {
+			$("<div>")
+				.addClass("visualize-title")
+				.html(stats.title)
+				.appendTo(infoContainer);
+		}
+
+		//append key
+		if (options.appendKey) {
+			var legend = $("<ul>").addClass("visualize-key");
+			stats.series.lines(function(i, line) {
+				$("<li>")
+					.append(
+						$("<span>")
+							.addClass("visualize-key-color")
+							.css({background: options.colors[i])
+					).append(
+						$("<span>")
+							.addClass("visualize-key-label")
+							.html(line.name)
+					).appendTo(legend);
+			});
+			legend.appendTo(infoContainer);
+		}
+	}
+
+	// Append new canvas to page	
+	if (!container) {
+		if (stats.table) {
+			canvasContainer.insertAfter(stats.table);
+		} else {
+			canvasContainer.appendTo("body");
+		}
+	}
+	
+	// Something strange (maybe a IE hack)
+	// @TODO TEST OR SUPPRESS THIS
+	if (typeof(G_vmlCanvasManager) != 'undefined') { 
+		G_vmlCanvasManager.init(); 
+		G_vmlCanvasManager.initElement(canvas[0]); 
+	}	
+
+	// Create chart
+	var type = options.type, 
+			context = {
+				data: stats;
+				options: options,
+				target: {
+					canvasContainer: canvasContain,
+					canvasContext: canvas[0].getContext('2d'),
+					canvas: canvas					
+				}
+			};
+
+	if ($.visualize.plugins[type]) {
+			$.visualize.plugins[type].apply(context); // call our external plugin with the passed context
+
+	} else {
+			// try to dynamically load a new type of chart from external plugin
+			console.log("Trying to load jquery.vizualize." + type + ".js");
+
+			$.getScript("./js/jquery.visualize." + type + ".js", function loaded() {
+					$.visualize.plugins[type].apply(context);
+			}).fail(function(jqxhr, settings, exception) {
+					context.target.canvasContainer.remove();
+					throw "Failed to load jquery.vizualize plugin " + type + " : " + exception;
+			});
+	}
+
+}
+
+$.visualize.plugins: {} // additional chart scripts will load inside this namespace
+
+
 /**
  * Call the visualize plugin on tables to scrap their data
  * and automatically display a resulting charts
@@ -71,48 +196,23 @@ Stats.prototype = {
  */
 $.fn.visualize = function(opts, container) {
 
-    var defaults = {
-        type: 'bar', //also available: area, pie, line
-        width: $(this).width(), //height of canvas - defaults to table height
-        height: $(this).height(), //height of canvas - defaults to table height
+		// Build a generic representation of the data scraped from the table
+		function scrapeTable(table) {
+		}
 
-        appendTitle: true, //table caption text is added to chart
-        title: null, //grabs from table caption if null
-        appendKey: true, //color key is added to chart
-
-        rowFilter: ' ',
-        colFilter: ' ',
-
-        colors: ['#be1e2d','#666699','#92d5ea','#ee8310','#8d10ee','#5a3b16','#26a4ed','#f45a90','#e9e744'],
-        textColors: [], //corresponds with colors array. null/undefined items will fall back to CSS
-
-        parseDirection: 'x', //which direction to parse the table data
-        lineWeight: 4, //for line and area - stroke weight
-        yLabelInterval: 30, //distance between y labels
-
-        pieMargin: 20, //pie charts only - spacing around pie
-        pieLabelsAsPercent: true,
-        pieLabelPos: 'inside',
-
-        barGroupMargin: 10,
-        barMargin: 1  //space around bars in bar chart (added to both sides of bar)
-    };
+		if (container) {
+			opts.container = $(container);
+		}
 
     return $(this).each(function() {
 
         //configuration
-        var options = $.extend(defaults, opts);
-
-
-        var self = $(this);
+				var stats = scrapeTable($(this));
+				$.visualize(stats, opts);
 
     });
 
-}
-
-
-$.visualize = {
-    plugins: {} // additional chart scripts will load inside this namespace
 };
+
 
 })(jQuery);
