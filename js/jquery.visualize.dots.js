@@ -16,89 +16,91 @@
         drawDots.call(this, true);
     };
 
-    function drawDots(area) {
+    function drawDots(weighted) {
 
-			var o = this.options,
-					container = this.target.canvasContainer,
-					ctx = this.target.canvasContext,
-					canvas = this.target.canvas,
-					dataGroups = this.data.dataGroups(),
-					xLabels = this.data.xLabels(),
-					groupSums = this.data.groupSums(),
-					totalYRange = Array.max(groupSums),
-					topValue = this.data.topValue(),
-					zeroLoc = o.height * (topValue/totalYRange);
+        var o = this.options,
+            container = this.target.canvasContainer,
+            ctx = this.target.canvasContext,
+            canvas = this.target.canvas,
+            w = canvas.width(), h = canvas.height(),
+            series = this.data.dataGroups(),
+            xLabels = this.data.xLabels(),
+            topValue = this.data.topValue(),
+            bottomValue = (this.data.bottomValue() > 0) ? 0 : this.data.bottomValue(),
+            totalYRange =  topValue - bottomValue,
+            yLabels = this.data.yLabels(bottomValue, topValue);
 
-			container.addClass('visualize-line'); 
+        container.addClass('visualize-bar');
 
-			//write X labels
-			var xInterval = canvas.width() / (xLabels.length -1);
-			var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-				.width(canvas.width())
-				.height(canvas.height())
-				.insertBefore(canvas);
-			$.each(xLabels, function(i){ 
-				var thisLi = $('<li><span>'+this+'</span></li>')
-					.prepend('<span class="line" />')
-					.css('left', xInterval * i)
-					.appendTo(xlabelsUL);						
-				var label = thisLi.find('span:not(.line)');
-				var leftOffset = label.width()/-2;
-				if(i == 0){ leftOffset = 0; }
-				else if(i== xLabels.length-1){ leftOffset = -label.width(); }
-				label
-					.css('margin-left', leftOffset)
-					.addClass('label');
-			});
+        // Display X labels
+        var xInterval = canvas.width() / (xLabels.length - 1);
+        var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
+            .width(w).height(h)
+            .insertBefore(canvas);
 
-			//write Y labels
-			var yScale = canvas.height() / totalYRange;
-			var liBottom = canvas.height() / (yLabels.length-1);
-			var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-				.width(canvas.width())
-				.height(canvas.height())
-				.insertBefore(canvas);
-				
-			$.each(yLabels, function(i){  
-				var thisLi = $('<li><span>'+this+'</span></li>')
-					.prepend('<span class="line"  />')
-					.css('bottom',liBottom*i)
-					.prependTo(ylabelsUL);
-				var label = thisLi.find('span:not(.line)');
-				var topOffset = label.height()/-2;
-				if(i == 0){ topOffset = -label.height(); }
-				else if(i== yLabels.length-1){ topOffset = 0; }
-				label
-					.css('margin-top', topOffset)
-					.addClass('label');
-			});
+        $.each(xLabels, function(i, label) {
+            var $label = $("<span class='label'></span>").html(label);
+            $("<li>")
+                .css("left", xInterval * i)
+                .prepend("<span class='line' />")
+                .append($label)
+                .appendTo(xlabelsUL);
 
-			//start from the bottom left
-			ctx.translate(0,zeroLoc);
-			//iterate and draw
-			$.each(dataGroups,function(h){
-				// ctx.beginPath();
-				ctx.lineWidth = o.lineWeight;
-				ctx.lineJoin = 'round';
-				var points = this.points;
-				var points_weight = this.points_weight;
-				var integer = 0;
-				var ptidx = 0;
-				var radius = 1;
-				ctx.fillStyle = this.color;
-				ctx.strokeStyle = this.color;
-				$.each(points, function(){
-					ctx.beginPath();
-					radius = area ? points_weight[ptidx] : 1;
-					ctx.arc(integer,-(this*yScale),radius,0,2*Math.PI,false);          
-					integer+=xInterval;
-					ptidx += 1;
-					ctx.fill();
-				ctx.stroke();              
-				});
-			
-			});
-		}
+            // Adjust the labels' positions
+            var leftOffset = $label.width() / -2;
+            if (i == 0) {
+                leftOffset = 0;
+            } else if (i== xLabels.length-1) {
+                leftOffset = -$label.width();
+            }
+            $label.css('margin-left', leftOffset);
+        });
+
+
+        // Display Y labels
+        var yScale = h / totalYRange;
+        var liBottom = h / (yLabels.length - 1);
+
+        var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
+            .width(w).height(h)
+            .insertBefore(canvas);
+
+        $.each(yLabels, function(i, label){
+            var $label = $("<span class='label'></span>").html(label);
+            $("<li>")
+                .css("bottom", liBottom * i)
+                .prepend("<span class='line' />")
+                .append($label)
+                .prependTo(ylabelsUL);
+
+            // Adjust the vertical position of first and last labels
+            var topOffset = $label.height() / -2;
+            if (i == 0) {
+                topOffset = -$label.height();
+            } else if (i == yLabels.length-1) {
+                topOffset = 0;
+            }
+            $label.css('margin-top', topOffset);
+        });
+
+        //iterate and draw
+        $.each(series, function(idx, serie) {
+
+            ctx.fillStyle = serie.color;
+            ctx.strokeStyle = serie.color;
+            ctx.lineWidth = o.lineWeight;
+            ctx.lineJoin = 'round';
+
+            $.each(serie.points, function(i, val){
+                ctx.beginPath();
+                var radius = weighted ? serie.points_weight[i] : 1;
+                ctx.arc(i*xInterval, -val*yScale + h, radius, 0, 2*Math.PI, false);
+                ctx.fill();
+                ctx.stroke();
+            });
+
+        });
+    }
 
 })();
 
