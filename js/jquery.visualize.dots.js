@@ -1,5 +1,5 @@
 /**
- * Radar charts for the jquery Visualize plugin 2.0
+ * Scatter charts for the jquery Visualize plugin 2.0
  *
  * Data are represented by a star shaped form whose branches
  * are equal to the total value of each serie
@@ -30,10 +30,10 @@
             totalYRange =  topValue - bottomValue,
             yLabels = this.data.yLabels(bottomValue, topValue);
 
-        container.addClass('visualize-bar');
+        container.addClass('visualize-dots');
 
         // Display X labels
-        var xInterval = canvas.width() / (xLabels.length - 1);
+        var xInterval = w / (xLabels.length - 1);
         var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
             .width(w).height(h)
             .insertBefore(canvas);
