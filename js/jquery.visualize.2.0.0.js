@@ -78,7 +78,7 @@
          * Set the coordinate system
          * @param coordRange {x: range array, y: range array}
          */
-        setWindow: function(coordRange) {
+        setViewport: function(coordRange) {
             this.coordRange = coordRange;
 
             var xRange = (coordRange.x[1] - coordRange.x[0]);

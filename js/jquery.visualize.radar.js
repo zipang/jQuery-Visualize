@@ -25,7 +25,7 @@ $.visualize.plugins.radar = function () {
 	var radius = max + options.pieMargin;
 
 	// Tell the drawing area (canvas) to be the center of a circle with the given radius
-	this.target.setWindow({x: [-radius, radius], y: [-radius, radius]});
+	this.target.setViewport({x: [-radius, radius], y: [-radius, radius]});
 
 	var area_span = Math.PI * 2 / count;
 
