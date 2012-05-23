@@ -641,17 +641,21 @@ $.visualize.plugins.radar = function () {
 /**
  * Scatter charts for the jquery Visualize plugin 2.0
  *
- * Data are represented by a star shaped form whose branches
- * are equal to the total value of each serie
- * Doesn't work very well if there is less than 3 members in the serie.
+ * Data are represented by a serie of dots along two axis
  */
 (function define() {
 
+    /**
+     * Simple Dots
+     */
     $.visualize.plugins.dots = function () {
 
         drawDots.call(this, false);
     };
-    $.visualize.plugins.wdots = function () {
+    /**
+     * Weighted Dots
+     */
+    $.visualize.plugins.dots_w = function () {
 
         drawDots.call(this, true);
     };
