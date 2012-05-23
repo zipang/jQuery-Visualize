@@ -42,12 +42,14 @@
         } else {
             // try to dynamically load a new type of chart from external plugin
             console.log("Trying to load jquery.vizualize." + type + ".js");
-            $.getScript("./js/jquery.visualize." + type + ".js",
+            $.getScript("./js/jquery.visualize." + type.split(/[-_]/)[0] + ".js",
                 function loaded() {
                     $.visualize.plugins[type].apply(context);
                 }).fail(function (jqxhr, settings, exception) {
                     context.target.canvasContainer.remove();
-                    throw "Failed to load jquery.vizualize plugin " + type + " : " + exception;
+                    if (console.log) console.log( "Failed to load jquery.vizualize plugin " + type
+                        + " in following location : ./js/jquery.visualize." + type.split(/[-_]/)[0] + ".js\n"
+                        + exception );
                 });
         }
     }

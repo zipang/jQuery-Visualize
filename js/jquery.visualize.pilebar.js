@@ -10,7 +10,8 @@
 
         drawPile.call(this, false);
     };
-    $.visualize.plugins.pilebar100 = function () {
+
+    $.visualize.plugins.pilebar_100 = function () {
 
         drawPile.call(this, true);
     };
