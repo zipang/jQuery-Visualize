@@ -14,7 +14,7 @@
 
 	<script type="text/javascript">
 		$(function loaded() {
-				$.visualize(stats, {
+				$.visualize("#sales", {
 					type: "radar",
 					container: "#chart",
 					columns: "categories", lines: "salesman", 
@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<table >
+<table id="#sales">
 	<caption>2009 Employee Sales by Department</caption>
 	<thead>
 		<tr>

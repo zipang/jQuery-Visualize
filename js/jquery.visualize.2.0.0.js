@@ -7,62 +7,53 @@
 (function ($) {
 
 // UTILITIES
-    Array.max = function (arr) {
-        return Math.max.apply(Array, arr);
-    };
-    Array.min = function (arr) {
-        return Math.min.apply(Array, arr);
-    };
-    Array.sum = function (arr) {
-        var len = (arr && arr.length ? arr.length : 0), sum = 0, val;
-        for (var i = 0; i < len; i++) {
-            val = parseFloat(arr[i]);
-            sum += ((!arr[i] || isNaN(arr[i])) ? 0 : val);
-        }
-        return sum;
-    };
-    Array.avg = function (arr) {
-        var len = (arr && arr.length ? arr.length : 0);
-        return (len ? Array.sum(arr) / len : 0);
-    };
+	if (!Array.prototype.filter) {
+		Array.prototype.filter = function(fun /*, thisp */) {
+			"use strict";
+
+			if (this == null)
+				throw new TypeError();
+
+			var t = Object(this);
+			var len = t.length >>> 0;
+			if (typeof fun != "function")
+				throw new TypeError();
+
+			var res = [];
+			var thisp = arguments[1];
+			for (var i = 0; i < len; i++) {
+				if (i in t) {
+					var val = t[i]; // in case fun mutates this
+					if (fun.call(thisp, val, i, t))
+						res.push(val);
+				}
+			}
+
+			return res;
+		};
+	}
+	Array.prototype.max = function () {
+			return Math.max.apply(null, this);
+	};
+	Array.min = function (arr) {
+			return Math.min.apply(Array, arr);
+	};
+	Array.sum = function (arr) {
+			var len = (arr && arr.length ? arr.length : 0), sum = 0, val;
+			for (var i = 0; i < len; i++) {
+					val = parseFloat(arr[i]);
+					sum += ((!arr[i] || isNaN(arr[i])) ? 0 : val);
+			}
+			return sum;
+	};
+	Array.avg = function (arr) {
+			var len = (arr && arr.length ? arr.length : 0);
+			return (len ? Array.sum(arr) / len : 0);
+	};
 
     // Build a generic representation of the data scraped from the table
     function scrapeTable(table) {
     }
-
-    /**
-     * Multi dimensional structure to store series of data
-     * and easily retrieve them
-     * @param stats
-     */
-    function Stats(stats) {
-
-        var defaultSelf = {
-            title:"Empty",
-            description:"not provided",
-            series:{
-                lines:[],
-                columns:[]
-            }
-        };
-
-        if (typeof stats == "string") {
-            this.table = $(stats);
-            $.extend(this, scrapeTable(this.table));
-
-        } else {
-            $.extend(this, defaultSelf, stats);
-        }
-    }
-
-    Stats.prototype = {
-        max:function () {
-            var dataSet, len = arguments.length;
-            if (len == 1) {
-                return Array.max(this.series[arguments[0]]);
-            }
-        }
-    };
 
 
     function EnhancedCanvas($canvas, container) {
