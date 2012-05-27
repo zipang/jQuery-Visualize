@@ -207,22 +207,25 @@
 		memoize: function( /* names */ ) {
 			var names = (arguments.length) ? arguments : ["max", "min", "sum", "avg"];
 
-			for (var i = names.length-1; i--; ) {
+			for (var i = names.length; i--; ) {
 				var methodName = names[i];
-				if (!Serie.prototype[methodName] || !Serie.prototype[methodName] instanceof Function) return;
 
-				(function closure() {
+				if (Serie.prototype[methodName] && Serie.prototype[methodName] instanceof Function) {
+
 					var computed = Serie.prototype[methodName].apply(this);
-					// WARNING : Defaults min(), max().. methods only work with numeric values
-					// >> Trying to store anything else will surely lead us to trouble
-					// because the only way to deal with non Number object when calling max, min, etc..
+
+					// WARNING : Defaults min(), max(), sum(), avg().. methods only work with numeric values
+					// >> Trying to store anything else surely indicates tha we have messes somewhere
+					// The only way to deal with non Number object when calling max, min, etc..
 					// is to specify a comparator or value getter when calling them
-					if (computed instanceof Number) {
-						this[methodName] = function() { // the memoized function still accepts a comparator
-							return computed;
-						}
+					if (computed.constructor == Number) {
+						(function remember(methodName, computed) {
+							this[methodName] = function() {
+								return computed;
+							};
+						}).call(this, methodName, computed);
 					}
-				}).apply(this);
+				}
 			}
 
 			// memoize the elements by their key

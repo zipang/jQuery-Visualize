@@ -191,7 +191,6 @@ vows.describe("Statistical Serie").addBatch({
 		},
 
 		"Serie has min()": function (s) {
-			console.log("memorized min : " + s.min());
 			s.min().should.equal(1);
 		},
 
@@ -206,7 +205,24 @@ vows.describe("Statistical Serie").addBatch({
 		"Serie has avg()": function (s) {
 			s.avg().should.equal(3);
 		}
+	},
+
+	"Now.. if a serie changes.. just call memoize() again !!": {
+
+		topic: function() {
+			return new Serie("John sales", 1, 2, 3, 4, 5).memoize();
+		},
+
+		"min() will not reflect a change unless i rememoize the whole serie !": function (s) {
+			s.min().should.equal(1);
+			s[0] = -10;
+			s.min().should.equal(1); // allways..
+			s.memoize(); // do it again..
+			s.min().should.equal(-10); // actualized !
+		}
+
 	}
+
 
 
 }).export(module); // End of batch
