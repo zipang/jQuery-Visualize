@@ -1,7 +1,7 @@
 
 var Serie = require("../Serie").Serie,
-	vows   = require("vows"),
-	should = require("should");
+		vows	= require("vows"),
+	should	= require("should");
 
 vows.describe("Statistical Serie").addBatch({
 
@@ -131,7 +131,7 @@ vows.describe("Statistical Serie").addBatch({
 	"Serie can compare arbitrary objects given a specific comparator !!": {
 
 		topic: function() {
-			var paris = {location: {lat: 48.856578, long: 2.351828}, population: 2234105},
+			var paris  = {location: {lat: 48.856578, long: 2.351828}, population: 2234105},
 					berlin = {location: {lat: 52.5186, long: 13.4081}, population: 3499879},
 					dublin = {location: {lat: 53.343418, long: -6.267612}, population: 525383};
 
@@ -155,7 +155,7 @@ vows.describe("Statistical Serie").addBatch({
 	"Serie can compare arbitrary objects given a value extractor !!": {
 
 		topic: function() {
-			var paris = {location: {lat: 48.856578, long: 2.351828}, population: 2234105},
+			var paris  = {location: {lat: 48.856578, long: 2.351828}, population: 2234105},
 					berlin = {location: {lat: 52.5186, long: 13.4081}, population: 3499879},
 					dublin = {location: {lat: 53.343418, long: -6.267612}, population: 525383};
 
@@ -222,7 +222,5 @@ vows.describe("Statistical Serie").addBatch({
 		}
 
 	}
-
-
 
 }).export(module); // End of batch
