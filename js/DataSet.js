@@ -28,6 +28,10 @@
 	sales.columns.Cars.max() >> 2130
 	sales.lines.John.max() >> 1000
 
+	sales.lines.maxValue(function extractLineMax() {
+		return this.max();
+	}) >> 2130
+
 */
 
 // import dependancies in
@@ -66,11 +70,11 @@ var Serie = this.Serie ? this.Serie : require("./Serie").Serie;
 				delete data.keys;
 
 				for (var name in data) {
-					var s = new Serie(name, data[name]).keys(serieKeys);
+					var s = new Serie(name, data[name]).aliases(serieKeys);
 					catg.push(s);
 					catgKeys.push(name);
 				}
-				catg.keys(catgKeys);
+				catg.aliases(catgKeys);
 
 			}
 
@@ -84,12 +88,21 @@ var Serie = this.Serie ? this.Serie : require("./Serie").Serie;
 
 	DataSet.prototype = {
 
+		/**
+		 * Add a new serie of values inside a categorie
+		 */
 		addSerie: function(catgName, serie) {
-			if (arguments.length != 2 || !(serie instanceof Serie)) {
+			if (arguments.length != 2) {
 				throw "Bad arguments : expected a categorie name and a serie"
 			}
-			if (!this[catgName]) this.addCategorie(catgName);
-			this[catgName].push(serie);
+			var catg = this.series[catgName];
+			if (!catg) catg = this.series[catgName] = new Serie(catgName);
+			catg.push(serie);
+			if (serie.name) { // alias it
+				catg.__defineGetter__(name, function() {
+					return serie;
+				});
+			}
 		}
 	}; // DataSet prototype
 

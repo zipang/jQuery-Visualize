@@ -40,8 +40,14 @@ vows.describe("A multidimensional set of data").addBatch({
 		},
 
 		"Check name and initial length": function (data) {
-			data.should.have.keys(["title", "series"]);
+			data.should.include("title", "series");
 			data.title.should.equal("Sales");
+		},
+
+		"Add manually some series inside categories": {
+			topic: function(data) {
+				data.add();
+			}
 		}
 	},
 

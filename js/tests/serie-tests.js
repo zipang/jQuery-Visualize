@@ -130,11 +130,11 @@ vows.describe("Statistical Serie").addBatch({
 	"Serie's elements can be accessed by aliases when keys are provided": {
 
 		topic: function() {
-			return new Serie("letters", "a", "b", "c").keys("A", "B", "C");
+			return new Serie("letters", "a", "b", "c").aliases("A", "B", "C");
 		},
 
 		"We can get elements by their aliases": function (letters) {
-			letters[0].should.equal(letters.A)
+			letters[0].should.equal(letters.A);
 			letters.A.should.equal("a");
 			letters[0] = "aha!";
 			letters.A.should.equal("aha!"); // still true
@@ -146,6 +146,32 @@ vows.describe("Statistical Serie").addBatch({
 		}
 	},
 
+	"Serie's objects can be accessed by aliases when a name extractor is provided": {
+
+		topic: function() {
+			return new Serie("persons",
+				{name: "john"},
+				{name: "yoko", lovesjohn: true},
+				{name: "paul"}
+			).aliases(function() {return this.name;});
+		},
+
+		"THe serie has aliases as property accessors": function (persons) {
+			persons.should.have.ownProperty("john");
+			persons.should.have.ownProperty("yoko");
+			persons.should.have.ownProperty("paul");
+		},
+
+		"We can now access elements by their name": function (persons) {
+			persons.yoko.lovesjohn.should.be.true;
+		},
+
+		"Elements accessed by their index or alias are really the same": function (persons) {
+			persons.yoko.should.eql(persons[1]);
+		}
+
+	},
+
 	"Serie can compare arbitrary objects given a specific comparator !!": {
 
 		topic: function() {
@@ -153,7 +179,7 @@ vows.describe("Statistical Serie").addBatch({
 					berlin = {location: {lat: 52.5186, long: 13.4081}, population: 3499879},
 					dublin = {location: {lat: 53.343418, long: -6.267612}, population: 525383};
 
-			return new Serie("cities", paris, berlin, dublin).keys("paris", "berlin", "dublin");
+			return new Serie("cities", paris, berlin, dublin).aliases("paris", "berlin", "dublin");
 		},
 
 		"Dublin is the northest citie in our list": function (cities) {

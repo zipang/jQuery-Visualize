@@ -60,7 +60,7 @@
 	// ------------------------------------------------------ //
 
 
-	// Define the static methods.
+	// Define the instance methods.
 	Serie.injectClassMethods = function( serie ){
 
 		// Loop over all the prototype methods and add them
@@ -89,14 +89,40 @@
 	Serie.prototype = {
 
 		/**
-		 * Define alias for each indexed element in the serie
-		 * The provided array of keys must have the same length as this serie's length
+		 * Define alias for elements in the serie
+		 * Aliases may be defined by a name extractor like in
+			 serie.aliases(function extractName() {return this.name;})
+
+		 * Or they may be provided by an array of keys that will be attached to write/store the elements at the same position in the serie
+			 serie.aliases(["X", "Y"]); // X will access element 0 and Y element 1
+			 serie.aliases("X", "Y"); // idem
+
+		 * Note : After this call, the Serie should be memoized() as any further modification
+		 * like adding or removing elements would most certainly render the aliases obsoletes
 		 */
-		keys: function(keys) {
+		aliases: function(keys) {
 
 			this.removeKeys(); // remove previously stored keys
 
-			this._keys = (keys instanceof Array) ? keys : Array.apply(null, arguments);
+			if ((arguments.length == 1) && (typeof keys != "string")) {
+				if (typeof keys == "function") {
+					this._keys = [];
+					this.forEachDefinedItem(function(i, item, serie) {
+						serie._keys[i] = keys.apply(item);
+						serie.__defineGetter__(serie._keys[i], function() {
+							return item;
+						});
+					});
+
+					return this;
+
+				} else {
+					this._keys = keys;
+				}
+
+			} else { // expected a list of strings as arguments
+				this._keys = Array.apply(null, arguments);
+			}
 
 			// Define the key's aliases as getters and setters
 			for (var index = this._keys.length; index--; ) {
@@ -136,7 +162,7 @@
 
 				for (var i = 0, len = this.length; i < len; i++) {
 					var val = this[i];
-					if (typeof val != "undefined") doSomething(i, val);
+					if (typeof val != "undefined") doSomething(i, val, this);
 				}
 			}
 
@@ -146,21 +172,20 @@
 		/**
 		 * Returns the greatest value of defined elements in the serie
 		 * Use the provided value extractor if values in the serie are not numerical
-		 * A extractor function takes 2 arguments and must return a positive
-		 * value if the first argument is superior to the second,
-		 * 0 if they are equal and a negative value in the last eventuality
+		 * An extractor function must return a numerical value from the passed element,
+		 * Note : element is passed as 'this' to the extractor
 		 */
 		max: function(extractor) {
 			var max, maxValue;
 
 			if (typeof extractor == "function") {
-					this.forEachDefinedItem(function(i, item) {
-						var val = extractor.apply(item);
-						if (max === undefined || val > maxValue) {
-							max = item;
-							maxValue = val;
-						}
-					});
+				this.forEachDefinedItem(function(i, item) {
+					var val = extractor.apply(item);
+					if (max === undefined || val > maxValue) {
+						max = item;
+						maxValue = val;
+					}
+				});
 
 			} else { // we expect only numerical values
 				// Try the most usual and quick method working only on contiguous numerical series..
@@ -182,17 +207,20 @@
 
 		/**
 		 * Returns the smallest numerical value of defined elements in the serie
+		 * Use the provided value extractor if values in the serie are not numerical
+		 * An extractor function must return a numerical value from the passed element,
+		 * Note : element is passed as 'this' to the extractor
 		 */
 		min: function(extractor) {
 			var min, minValue;
 
 			if (typeof extractor == "function") {
-					this.forEachDefinedItem(function(i, item) {
-						var val = extractor.apply(item);
-						if (min === undefined || val < minValue) {
-							min = item; minValue = val;
-						}
-					});
+				this.forEachDefinedItem(function(i, item) {
+					var val = extractor.apply(item);
+					if (min === undefined || val < minValue) {
+						min = item; minValue = val;
+					}
+				});
 
 			} else {  // we expect only numerical values
 				// Try the most usual and quick method working only on contiguous numerical series..
