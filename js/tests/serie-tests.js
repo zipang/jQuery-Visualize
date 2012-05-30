@@ -60,7 +60,7 @@ vows.describe("Statistical Serie").addBatch({
 		},
 
 		"Check name and initial length": function (s) {
-			s.name.should.equal("John sales");
+			s.should.be.instanceof(Array);
 			s.length.should.equal(3);
 			s[0].should.equal(1);
 			s[2].should.equal(3);
@@ -77,6 +77,16 @@ vows.describe("Statistical Serie").addBatch({
 		topic: function() {
 			return new Serie("John sales", 1, 2, 3, 4, 5);
 		},
+
+		"has Serie.constructor": function (s) {
+			s.constructor.should.eql(Serie);
+		},
+
+		/* Broken.. and irreparable with this implementation
+			 (serie is REALLY an Array)
+		"instance of Serie": function (s) {
+			s.should.be.an.instanceof(Serie);
+		},*/
 
 		"Serie has min()": function (s) {
 			s.min().should.equal(1);
@@ -117,14 +127,22 @@ vows.describe("Statistical Serie").addBatch({
 
 	},
 
-	"Serie's elements can be accessed by keys when provided": {
+	"Serie's elements can be accessed by aliases when keys are provided": {
 
 		topic: function() {
-			return new Serie("letters", "a", "b", "c").keys("A", "B", "C").memoize();
+			return new Serie("letters", "a", "b", "c").keys("A", "B", "C");
 		},
 
-		"ABC..": function (letters) {
-			letters[0].should.equal(letters.A);
+		"We can get elements by their aliases": function (letters) {
+			letters[0].should.equal(letters.A)
+			letters.A.should.equal("a");
+			letters[0] = "aha!";
+			letters.A.should.equal("aha!"); // still true
+		},
+
+		"We can write elements by their alias": function (letters) {
+			letters.B = "Bébé";
+			letters[1].should.equal("Bébé");
 		}
 	},
 
@@ -135,47 +153,33 @@ vows.describe("Statistical Serie").addBatch({
 					berlin = {location: {lat: 52.5186, long: 13.4081}, population: 3499879},
 					dublin = {location: {lat: 53.343418, long: -6.267612}, population: 525383};
 
-			return new Serie("cities", paris, berlin, dublin).keys("paris", "berlin", "dublin").memoize();
+			return new Serie("cities", paris, berlin, dublin).keys("paris", "berlin", "dublin");
 		},
 
 		"Dublin is the northest citie in our list": function (cities) {
-			cities.max(function thulest(a,b) {
-				return (a.location.lat - b.location.lat);
+			cities.max(function getLatitude() {
+				return this.location.lat;
 			}).should.equal(cities.dublin);
+
+			cities.maxValue(function getLatitude() {
+				return this.location.lat;
+			}).should.equal(cities.dublin.location.lat);
 		},
 
 		"Dublin has the lowest number of habitants in our list": function (cities) {
-			cities.min(function hasGreatestPopulation(a,b) {
-				return (a.population - b.population);
+			cities.min(function getPopulation() {
+				return this.population;
 			}).should.equal(cities.dublin);
-		}
 
-	},
-
-	"Serie can compare arbitrary objects given a value extractor !!": {
-
-		topic: function() {
-			var paris  = {location: {lat: 48.856578, long: 2.351828}, population: 2234105},
-					berlin = {location: {lat: 52.5186, long: 13.4081}, population: 3499879},
-					dublin = {location: {lat: 53.343418, long: -6.267612}, population: 525383};
-
-			return new Serie("cities", paris, berlin, dublin)
-				.keys("paris", "berlin", "dublin").memoize()
-				.defineElementValue(function() {
-					return this.population;
-				});
-		},
-
-		"Berlin is the most crowded city in our list": function (cities) {
-			cities.max().should.equal(cities.berlin.population);
-		},
-
-		"Dublin is the least crowded city in our list": function (cities) {
-			cities.min().should.equal(cities.dublin.population);
+			cities.minValue(function getPopulation() {
+				return this.population;
+			}).should.equal(cities.dublin.population);
 		},
 
 		"We can now sum cities population": function (cities) {
-			cities.sum().should.equal(
+			cities.sum(function getPopulation() {
+				return this.population;
+			}).should.equal(
 				cities.paris.population
 				+ cities.berlin.population
 				+ cities.dublin.population
