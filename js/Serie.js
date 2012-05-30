@@ -50,6 +50,8 @@
 		// Augment our array instance with all the Serie goodness..
 		Serie.injectClassMethods( serie );
 
+		serie.constructor = Serie;
+
 		return serie;
 	}
 
@@ -87,40 +89,53 @@
 	Serie.prototype = {
 
 		/**
-		 * Define the keys of the elements in the serie
+		 * Define alias for each indexed element in the serie
+		 * The provided array of keys must have the same length as this serie's length
 		 */
 		keys: function(keys) {
-			this.keys = (keys instanceof Array) ? keys : Array.apply(null, arguments);
+
+			this.removeKeys(); // remove previously stored keys
+
+			this._keys = (keys instanceof Array) ? keys : Array.apply(null, arguments);
+
+			// Define the key's aliases as getters and setters
+			for (var index = this._keys.length; index--; ) {
+				(function rememberAlias(serie, i) {
+					serie.__defineGetter__(serie._keys[i], function() {
+						return serie[i];
+					});
+					serie.__defineSetter__(serie._keys[i], function(val) {
+						serie[i] = val;
+					});
+				})(this, index);
+			}
+
 			return this;
 		},
 
-		getValue: function(i) {
-			return this[i];
-		},
+		removeKeys: function() {
 
-		/**
-		 * Define how to retrieve the numerical value of elements
-		 * when they are not numbers
-		 * This method will be used if defined by sum(), avg(), min(), max()..
-		 */
-		defineElementValue: function(extractValue) {
-			if (extractValue instanceof Function) {
-				this.getValue = function(i) {
-					return (typeof this[i] == "undefined") ? undefined : extractValue.apply(this[i]);
-				};
+			if (!this._keys) return;
+
+			// Remove the memorized key elements
+			for (var i = this._keys.length; i--; ) {
+				delete this._keys[i];
 			}
+
+			delete this._keys;
+
 			return this;
 		},
 
 		/**
 		 * Iterate only on the defined elements
 		 */
-		forEachDefinedValue: function(doSomething) {
+		forEachDefinedItem: function(doSomething) {
 
 			if (doSomething instanceof Function) {
 
 				for (var i = 0, len = this.length; i < len; i++) {
-					var val = this.getValue(i);
+					var val = this[i];
 					if (typeof val != "undefined") doSomething(i, val);
 				}
 			}
@@ -130,26 +145,30 @@
 
 		/**
 		 * Returns the greatest value of defined elements in the serie
-		 * Use the provided comparator if values in the serie are not numerical
-		 * A comparator function takes 2 arguments and must return a positive
+		 * Use the provided value extractor if values in the serie are not numerical
+		 * A extractor function takes 2 arguments and must return a positive
 		 * value if the first argument is superior to the second,
-		 * 0 if they are equal and a negative value
+		 * 0 if they are equal and a negative value in the last eventuality
 		 */
-		max: function(comparator) {
-			var max;
+		max: function(extractor) {
+			var max, maxValue;
 
-			if (typeof comparator == "function") {
-					this.forEachDefinedValue(function(i, val) {
-						if (max === undefined) max = val; else if (comparator(val, max) > 0) max = val;
+			if (typeof extractor == "function") {
+					this.forEachDefinedItem(function(i, item) {
+						var val = extractor.apply(item);
+						if (max === undefined || val > maxValue) {
+							max = item;
+							maxValue = val;
+						}
 					});
 
-			} else {
+			} else { // we expect only numerical values
 				// Try the most usual and quick method working only on contiguous numerical series..
 				max = Math.max.apply( null, this );
 
-				if (!max && max != 0) { // quack !!! (playing with scarce arrays or non numerical objects....)
+				if (!max && max !== 0) { // quack !!! (playing with scarce arrays....)
 					max = undefined;
-					this.forEachDefinedValue(function(i, val) {
+					this.forEachDefinedItem(function(i, val) {
 						if (max === undefined) max = val; else if (val > max) max = val;
 					});
 				}
@@ -157,24 +176,31 @@
 			return max;
 		},
 
+		maxValue: function(extractor) {
+			return extractor.apply(this.max(extractor));
+		},
+
 		/**
 		 * Returns the smallest numerical value of defined elements in the serie
 		 */
-		min: function(comparator) {
-			var min;
+		min: function(extractor) {
+			var min, minValue;
 
-			if (typeof comparator == "function") {
-					this.forEachDefinedValue(function(i, val) {
-						if (min === undefined) min = val; else if (comparator(val, min) < 0) min = val;
+			if (typeof extractor == "function") {
+					this.forEachDefinedItem(function(i, item) {
+						var val = extractor.apply(item);
+						if (min === undefined || val < minValue) {
+							min = item; minValue = val;
+						}
 					});
 
-			} else {
+			} else {  // we expect only numerical values
 				// Try the most usual and quick method working only on contiguous numerical series..
 				min = Math.min.apply( null, this );
 
-				if (!min && min != 0) { // quack !!! (playing with scarce arrays or non numerical objects....)
+				if (!min && min !== 0) { // quack !!! (playing with scarce arrays....)
 					min = undefined;
-					this.forEachDefinedValue(function(i, val) {
+					this.forEachDefinedItem(function(i, val) {
 						if (min === undefined) min = val; else if (val < min) min = val;
 					});
 				}
@@ -182,16 +208,20 @@
 			return min;
 		},
 
-		sum: function() {
-			var total = 0, len = this.length, val;
-			for (var i = len; i--; ) {
-				val = this.getValue(i);
+		minValue: function(extractor) {
+			return extractor.apply(this.min(extractor));
+		},
+
+		sum: function(extractor) {
+			var val, total = 0, i = this.length;
+			while (i--) {
+				val = (extractor ? extractor.apply(this[i]) : this[i]);
 				if (val) total += val; // take care of not adding undefined values
 			}
 			return total;
 		},
 
-		avg: function() {
+		avg: function(extractor) {
 			return (this.length) ? this.sum() / this.length : undefined;
 		},
 
@@ -217,7 +247,7 @@
 					// WARNING : Defaults min(), max(), sum(), avg().. methods only work with numeric values
 					// >> Trying to store anything else surely indicates tha we have messes somewhere
 					// The only way to deal with non Number object when calling max, min, etc..
-					// is to specify a comparator or value getter when calling them
+					// is to specify a extractor or value getter when calling them
 					if (computed.constructor == Number) {
 						(function remember(methodName, computed) {
 							this[methodName] = function() {
@@ -225,13 +255,6 @@
 							};
 						}).call(this, methodName, computed);
 					}
-				}
-			}
-
-			// memoize the elements by their key
-			if (this.keys) {
-				for (var i = this.length; i--; ) {
-					this[this.keys[i]] = this[i];
 				}
 			}
 
