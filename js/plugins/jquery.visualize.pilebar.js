@@ -28,23 +28,24 @@
 
         container.addClass("visualize-bar");
 
-        // Create X labels
+        // Display X labels
         var xInterval = canvas.width() / (xLabels.length);
         var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
             .width(canvas.width())
             .height(canvas.height())
             .insertBefore(canvas);
 
-        $.each(xLabels, function(i, label){
+        $.each(xLabels, function(i, label) {
+            var $label = $("<span class='label'></span>").html(label);
             $("<li>")
                 .css("left", xInterval * i)
                 .width(xInterval)
                 .prepend("<span class='line' />")
-                .append($("<span class='label' />").html(label))
+                .append($label)
                 .appendTo(xlabelsUL);
         });
 
-        // Create Y labels
+        // Display Y labels
         var yScale = canvas.height() / (normalized ? 100 : totalYRange);
         var liBottom = canvas.height() / (yLabels.length-1);
 
@@ -62,10 +63,10 @@
                 .prependTo(ylabelsUL);
 
             // Adjust the vertical position of first and last labels
-            var topOffset = $label.height()/-2;
-            if (i==0) {
+            var topOffset = $label.height() / -2;
+            if (i == 0) {
                 topOffset = -$label.height();
-            } else if (i== yLabels.length-1) {
+            } else if (i == yLabels.length-1) {
                 topOffset = 0;
             }
             $label.css('margin-top', topOffset);
