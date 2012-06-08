@@ -18,16 +18,14 @@
 
     function drawPile(normalized) {
         var o = this.options,
-            container = this.target.canvasContainer,
+            container = this.target.canvasContainer.addClass("visualize-bar"),
             ctx = this.target.canvasContext,
             canvas = this.target.canvas,
             dataGroups = this.data.dataGroups(),
             xLabels = this.data.xLabels(),
             groupSums = this.data.groupSums(),
-            totalYRange = Array.max(groupSums);
-            yLabels = (normalized ? this.data.yLabels100() : this.data.yLabels(0, totalYRange)),
-
-        container.addClass("visualize-bar");
+            totalYRange = Array.max(groupSums),
+            yLabels = (normalized ? this.data.yLabels100() : this.data.yLabels(0, totalYRange));
 
         // Display X labels
         var xInterval = canvas.width() / (xLabels.length);
@@ -76,18 +74,17 @@
         // Start from the bottom left
         var updatedZeroLoc = [];
 
-        for (var h=0; h<dataGroups.length; h++){ // series
+        for (var h=0; h<dataGroups.length; h++) { // series
             ctx.beginPath();
-            var linewidth = (xInterval-o.barGroupMargin*2) ;// removed / dataGroups.length; // removed +1
-            var strokeWidth = linewidth - (o.barMargin*2);
-            ctx.lineWidth = strokeWidth;
+            var groupWidth = (xInterval - o.barGroupMargin*2) ;
+            ctx.lineWidth = groupWidth - (o.barMargin*2);
             ctx.strokeStyle = dataGroups[h].color;
-            var points = dataGroups[h].points;
-            var integer = 0;
 
-            for(var i=0; i<points.length; i++){
-                if ( typeof(updatedZeroLoc[i])=='undefined' ) updatedZeroLoc[i]=o.height ;
-                var xVal = (integer-o.barGroupMargin) + linewidth/2;
+            var points = dataGroups[h].points, xPos = 0;
+
+            for (var i=0; i<points.length; i++) {
+                if (typeof(updatedZeroLoc[i]) == 'undefined') updatedZeroLoc[i] = o.height ;
+                var xVal = (xPos-o.barGroupMargin) + groupWidth/2;
                 xVal += o.barGroupMargin*2;
 
                 ctx.moveTo(xVal, updatedZeroLoc[i]);
@@ -99,14 +96,12 @@
                         +0.1 /* this a hack, otherwise bar are not displayed if all value in a serie are zero */
                 );
 
-                integer+=xInterval;
+                xPos+=xInterval;
             }
             ctx.stroke();
             ctx.closePath();
         }
 
     }
-
-
 
 })();
