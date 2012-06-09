@@ -6,103 +6,6 @@
  */
 (function ($) {
 
-// UTILITIES
-	if (!Array.prototype.filter) {
-		Array.prototype.filter = function(fun /*, thisp */) {
-			"use strict";
-
-			if (this == null)
-				throw new TypeError();
-
-			var t = Object(this);
-			var len = t.length >>> 0;
-			if (typeof fun != "function")
-				throw new TypeError();
-
-			var res = [];
-			var thisp = arguments[1];
-			for (var i = 0; i < len; i++) {
-				if (i in t) {
-					var val = t[i]; // in case fun mutates this
-					if (fun.call(thisp, val, i, t))
-						res.push(val);
-				}
-			}
-
-			return res;
-		};
-	}
-	Array.prototype.max = function () {
-			return Math.max.apply(null, this);
-	};
-	Array.min = function (arr) {
-			return Math.min.apply(Array, arr);
-	};
-	Array.sum = function (arr) {
-			var len = (arr && arr.length ? arr.length : 0), sum = 0, val;
-			for (var i = 0; i < len; i++) {
-					val = parseFloat(arr[i]);
-					sum += ((!arr[i] || isNaN(arr[i])) ? 0 : val);
-			}
-			return sum;
-	};
-	Array.avg = function (arr) {
-			var len = (arr && arr.length ? arr.length : 0);
-			return (len ? Array.sum(arr) / len : 0);
-	};
-
-    // Build a generic representation of the data scraped from the table
-    function scrapeTable(table) {
-    }
-
-
-    function EnhancedCanvas($canvas, container) {
-        this.canvas = $canvas[0];
-        this.width  = $canvas.width();
-        this.height = $canvas.height();
-        this.canvasContainer = container;
-        this.canvasContext = this.canvas.getContext('2d');
-    }
-
-    EnhancedCanvas.prototype = {
-        /**
-         * Set the coordinate system
-         * @param coordRange {x: range array, y: range array}
-         */
-        setViewport: function(coordRange) {
-            this.coordRange = coordRange;
-
-            var xRange = (coordRange.x[1] - coordRange.x[0]);
-            var xScale = this.width / xRange;
-
-            var yRange = (coordRange.y[0] - coordRange.y[1]); // reverse orientation for the y axis
-            var yScale = this.height / yRange;
-
-            this.canvasContext.scale(xScale, yScale); // this makes the viewport scale to the desired range
-            this.canvasContext.translate(-1*coordRange.x[0], -1*coordRange.y[1]); // this map the center where it should be
-
-        },
-
-        drawAxis: function() {
-            var ctx = this.canvasContext;
-
-            // Draw the X axis
-            ctx.beginPath();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 1;
-            ctx.moveTo(this.coordRange.x[0], 0);
-            ctx.lineTo(this.coordRange.x[1], 0);
-            ctx.stroke();
-
-            // Draw the Y axis
-            ctx.beginPath();
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 1;
-            ctx.moveTo(0, this.coordRange.y[0]);
-            ctx.lineTo(0, this.coordRange.y[1]);
-            ctx.stroke();
-        }
-    };
 
     var defaults = {
         type:'bar', //also available: area, pie, line
@@ -131,107 +34,6 @@
         barMargin:1  //space around bars in bar chart (added to both sides of bar)
     };
 
-    $.visualize = function (rawData, opts) {
-
-        var options = $.extend({}, defaults, opts);
-        var stats = new Stats(rawData);
-
-        //create canvas wrapper div, set inline w&h, append
-        var canvasContainer;
-        if (options.container) {
-            canvasContainer = $(options.container);
-            if (canvasContainer.length == 0) throw "[jquery.visualize plugin error] The target container '" + options.container + "' didn't return any matching element.";
-
-        } else {
-            canvasContainer = $("<div>")
-                .addClass("visualize")
-                .attr("role", "img")
-                .attr("aria-label", "Graph for " + stats.title)
-                .height(options.height).width(options.width)
-            ;
-        }
-
-        //create new canvas, set w&h attrs (not inline styles)
-        var canvas = $("<canvas>")
-            .height(options.height)
-            .width(options.width)
-            .appendTo(canvasContainer)
-        ;
-
-        //title/key container
-        if (options.appendTitle || options.appendKey) {
-
-            var infoContainer = $('<div class="visualize-info"></div>')
-                .appendTo(canvasContainer);
-
-            //append title
-            if (options.appendTitle) {
-                $("<div>")
-                    .addClass("visualize-title")
-                    .html(stats.title)
-                    .appendTo(infoContainer);
-            }
-
-            //append key
-            if (options.appendKey) {
-                var legend = $("<ul>").addClass("visualize-key");
-                $.each(stats.series.lines, function (i, line) {
-                    $("<li>")
-                        .append(
-                        $("<span>")
-                            .addClass("visualize-key-color")
-                            .css({background:options.colors[i]})
-                    ).append(
-                        $("<span>")
-                            .addClass("visualize-key-label")
-                            .html(line.name)
-                    ).appendTo(legend);
-                });
-                legend.appendTo(infoContainer);
-            }
-        }
-
-        // Append new canvas to page
-        if (!options.container) {
-            if (stats.table) {
-                canvasContainer.insertAfter(stats.table);
-            } else {
-                canvasContainer.appendTo("body");
-            }
-        }
-
-        // Something strange (maybe a IE hack)
-        // @TODO TEST OR SUPPRESS THIS
-        if (typeof(G_vmlCanvasManager) != 'undefined') {
-            G_vmlCanvasManager.init();
-            G_vmlCanvasManager.initElement(canvas[0]);
-        }
-
-        // Create chart
-        var type = options.type,
-            context = {
-                data:stats,
-                options:options,
-                target: new EnhancedCanvas(canvas, canvasContainer)
-            };
-
-        if ($.visualize.plugins[type]) {
-            $.visualize.plugins[type].apply(context); // call our external plugin with the passed context
-
-        } else {
-            // try to dynamically load a new type of chart from external plugin
-            console.log("Trying to load jquery.visualize." + type + ".js");
-
-            $.getScript("./js/jquery.visualize." + type + ".js",
-                function loaded() {
-                    $.visualize.plugins[type].apply(context);
-                }).fail(function (jqxhr, settings, exception) {
-                    context.target.canvasContainer.remove();
-                    throw "[jquery.visualize plugin error] Failed to load jquery.visualize plugin " + type + " : " + exception;
-                });
-        }
-
-    };
 
     $.visualize.plugins = {}; // additional chart scripts will load inside this namespace
 
@@ -244,18 +46,46 @@
      */
     $.fn.visualize = function (options, container) {
 
+				var $table = $(this);
+
+				if ($table.length == 0) return;
+
+				var options = $.extend({}, defaults, options);
+
         if (container) {
             options.container = $(container);
         }
 
-        return $(this).each(function (i, table) {
+				// look into our plugin store
+				var type = options.type,
+						plugin = $.Deferred(
+							$.visualize.plugins[type],
+							$.getScript("./js/plugins/jquery.visualize." + type + ".js").resolve($.visualize.plugins[type])
+				);
 
-            if (table.tagName != "TABLE") throw "[jquery.visualize plugin error] We don't know how to scrap anything else than HTML <table>(s)";
+				plugin
+					.done(drawChart)
+					.fail(function (jqxhr, settings, exception) {
+							throw "[jquery.visualize plugin error] Failed to load jquery.visualize plugin " + type + " : " + exception;
+					});
 
-            //configuration
-            $.visualize(stats, options);
+				function drawChart(plugin) {
+					$table.each(function (i, table) {
 
-        });
+						if (table.tagName != "TABLE") throw "[jquery.visualize plugin error] We don't know how to scrap anything else than HTML <table>(s)";
+
+						//configuration
+						plugin.apply({
+							data: $(table),
+							options: options
+						});
+
+					});
+
+				})
+
+				return $table;
+
 
     };
 
