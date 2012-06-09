@@ -1,0 +1,9 @@
+# Mac OS X ignore
+.DS_Store
+._*
+# Webstorm
+.idea/
+# local experimentations
+lab/
+# EditPlus backups
+*.*~
