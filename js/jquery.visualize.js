@@ -163,12 +163,12 @@
         xLabels:function () {
             if (this._xLabels) return this._xLabels;
             var xLabels = [];
+
             if (this.options.parseDirection == 'x') { // parse the column headers
                 this.table.find('tr:eq(0) th').filter(this.options.colFilter).each(function (i, th) {
                     xLabels.push($(th).html());
                 });
-            }
-            else {
+            } else {
                 this.table.find('tr:gt(0) th').filter(this.options.rowFilter).each(function (i, th) {
                     xLabels.push($(th).html());
                 });
@@ -238,9 +238,9 @@
             // Chart functions
             var charts = {
                 pie:function () {
-                    canvasContain.addClass('visualize-pie');
+                    $canvasContainer.addClass('visualize-pie');
                     if (o.pieLabelPos == 'outside') {
-                        canvasContain.addClass('visualize-pie-outside');
+                        $canvasContainer.addClass('visualize-pie-outside');
                     }
                     var centerX = Math.round(w / 2);
                     var centerY = Math.round(h / 2);
@@ -296,7 +296,7 @@
                 },
 
                 line:function (area) {
-                    canvasContain.addClass((area) ? 'visualize-area' : 'visualize-line');
+                    $canvasContainer.addClass((area) ? 'visualize-area' : 'visualize-line');
 
                     //write X labels
                     var xInterval = $canvas.width() / (xLabels.length - 1);
@@ -378,7 +378,7 @@
                 },
 
                 bar:function () {
-                    canvasContain.addClass('visualize-bar');
+                    $canvasContainer.addClass('visualize-bar');
 
                     //write X labels
                     var xInterval = w / (xLabels.length);
@@ -448,7 +448,9 @@
             var title = o.title || $table.find('caption').text();
 
             //create canvas wrapper div, set inline w&h, append
-            var canvasContain = (container || $('<div class="visualize" role="img" aria-label="Chart representing data from the table: ' + title + '" />'))
+            var $canvasContainer = (container || $("<div>"))
+                .addClass("visualize")
+                .attr("role", "img").attr("aria-label", "Chart representing data from the table: " + title)
                 .height(h).width(w)
                 .append($canvas);
 
@@ -466,34 +468,39 @@
 
             //title/key container
             if (o.appendTitle || o.appendKey) {
-                var infoContain = $('<div class="visualize-info"></div>')
-                    .appendTo(canvasContain);
-            }
+                var $infoContainer = $("<div>").addClass("visualize-info").appendTo($canvasContainer);
 
-            //append title
-            if (o.appendTitle) {
-                $('<div class="visualize-title">' + title + '</div>').appendTo(infoContain);
-            }
-
-            //append key
-            if (o.appendKey) {
-                var newKey = $('<ul class="visualize-key"></ul>');
-                var selector;
-                if (o.parseDirection == 'x') {
-                    selector = $table.find('tr:gt(0) th').filter(o.rowFilter);
-                } else {
-                    selector = $table.find('tr:eq(0) th').filter(o.colFilter);
+                //append title
+                if (o.appendTitle) {
+                    $("<div>").addClass("visualize-title").html(title).appendTo($infoContainer);
                 }
-                selector.each(function (i) {
-                    $('<li><span class="visualize-key-color" style="background: ' + dataGroups[i].color + '"></span><span class="visualize-key-label">' + $(this).text() + '</span></li>')
-                        .appendTo(newKey);
-                });
-                newKey.appendTo(infoContain);
+
+                //append keys
+                if (o.appendKey) {
+                    var $keys = $("<ul>").addClass("visualize-key");
+                    /*$.each(xLabels, function(i, label) {
+                        $("<li>")
+                            .append($("<span>").addClass("visualize-key-color").css("background", dataGroups[i].color))
+                            .append($("<span>").addClass("visualize-key-label").html(label))
+                            .appendTo($keys)
+                    });*/
+                    var selector;
+                    if (o.parseDirection == 'x') {
+                        selector = $table.find('tr:gt(0) th').filter(o.rowFilter);
+                    } else {
+                        selector = $table.find('tr:eq(0) th').filter(o.colFilter);
+                    }
+                    selector.each(function (i) {
+                        $('<li><span class="visualize-key-color" style="background: ' + dataGroups[i].color + '"></span><span class="visualize-key-label">' + $(this).text() + '</span></li>')
+                            .appendTo($keys);
+                    });
+                    $keys.appendTo($infoContainer);
+                }
             }
 
             //append new canvas to page
             if (!container) {
-                canvasContain.insertAfter($table);
+                $canvasContainer.insertAfter($table);
             }
             if (typeof(G_vmlCanvasManager) != 'undefined') {
                 G_vmlCanvasManager.init();
@@ -506,7 +513,7 @@
             //create chart
             drawChart(charts, o.type, {
                 target:{
-                    canvasContainer:canvasContain,
+                    canvasContainer:$canvasContainer,
                     canvasContext:ctx,
                     canvas:$canvas
                 },
@@ -519,7 +526,7 @@
 
             if (!container) {
                 //add event for updating
-                canvasContain.bind('visualizeRefresh', function () {
+                $canvasContainer.bind('visualizeRefresh', function () {
                     $table.visualize(o, $(this).empty());
                 });
             }
