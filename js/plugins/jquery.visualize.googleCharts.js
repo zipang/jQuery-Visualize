@@ -21,9 +21,9 @@
 	};
 
 	/**
-   * These are the default parsers provided by the data types
+     * These are the default parsers provided by the data types
 	 * supported by the Google Charts structures DataTable and DataView
-   */
+     */
 	var defaultParsers = {
 		'string':    function(str) {return String(str);},
 		'number':    function(str) {return Number(str);},
@@ -55,27 +55,37 @@
 	 * Scrap an HTML table line by line
 	 */
 	function scrapLines(table) {
-		var $table = $(table),
-				tableData = new google.visualization.DataTable();
 
-		$("tr", $table).each(function (i, line) {
+			var $table = $(table),
+					tableData = new google.visualization.DataTable();
 
-			if (i == 0) { // this is the first line that defines the columns headers
-				$("th", $(line)).each(function (i, cell) {
-					tableData.addColumn(cell.data("type") || "number", cell.text());
-				});
-			}
+			tableData.addColumn("string", "caption");
 
-			// other lines are rows containing data
-			tableData.addRow();
+			$("tr", $table).each(function (i, line) {
 
-			$("tr", $(line)).each(function (j, cell) {
-				var cellValue = parseValue(cell, tableData.getColumnType(j));
-				tableData.setCell(i - 1, j, cellValue, cell.html());
-			});
+					$("th", $(line)).each(function (j, cell) {
+							var $cell = $(cell);
 
-		})
-		return tableData;
+							if (i == 0) { // this is the first line that defines the columns headers
+									tableData.addColumn($cell.data("type") || "number", $cell.text());
+
+							} else { // line headers are series caption that must be placed in 1st position in Google Charts
+									// other lines are rows containing data
+									tableData.addRow();
+									tableData.setCell(i - 1, 0, $cell.text());
+							}
+					});
+
+					$("tr", $(line)).each(function (j, cell) {
+							var $cell = $(cell);
+							var cellValue = parseValue($cell, tableData.getColumnType(j));
+							tableData.setCell(i - 1, j + 1, cellValue, $cell.html());
+					});
+
+			})
+
+			tableData.setTableProperty("caption", $table.find("caption").text());
+			return tableData;
 
 	}
 
