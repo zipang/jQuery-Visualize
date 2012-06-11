@@ -1,10 +1,28 @@
-Code Examples from the book [Designing with Progressive Enhancement](http://filamentgroup.com/dwpe)
-================================
+jQuery Visualize Plugin (_Extended_)
+==================================
 
-This repository includes open-sourced code developed and maintained by Filament Group, Inc. as part of the book "Designing With Progressive Enhancement" (Peachpit).
+This repository contains a partial rewriting of the Visualize jQuery plugin code that was released by Filament Group, Inc. as part of their book [Designing with Progressive Enhancement](http://filamentgroup.com/dwpe).
 
-Those who purchase the book can access all of the examples from the book at the following URL: http://filamentgroup.com/dwpe#codeexamples.
+The original version is still developped and maintained by Filament [here](https://github.com/filamentgroup/jQuery-Visualize)
 
-All examples use the [jQuery JavaScript library](http://jquery.com).
+This first new version, while still a work in progress adds the following features to the original :
+- add a plugin mechanism to extend the library with new charts.
+- 3 new charts to include individually : piled bars, radar and dots.
 
-These code examples use the [EnhanceJS framework](https://github.com/filamentgroup/EnhanceJS) for applying progressive enhancement based on browser capabilities testing.
+Plugins Support
+
+
+We are now working on the experimental branch on a complete rewriting of this project to support these features :
+- Add a well structured and programmable Data structure that will contain the data to render, and will permit us to initialize the data with various data sources.
+- Break the code in separate modules to be able to independantly tests each features, add readability to the code, and be evolutive.
+- Add a facility layer on top of the canvas element to provide the developper with a more friendly and fun API to develop new charts.
+- Add a bridge towards more complete chart tools like Google charts or jqPlots
+- Keep the compatibility and ease of use of the original jQuery Visualize plugin (should not require any code change except the include source)
+
+This work has been made possible with the help of [Profeci](http://profeci.eu), a french company that specializes in Data Knowledge and allready uses this new version to display great data reporting.
+
+```javascript
+require 'redcarpet'
+markdown = Redcarpet.new("Hello World!")
+puts markdown.to_html
+```
