@@ -232,8 +232,8 @@
             }, options);
 
             //reset width, height to numbers
-            o.width = parseFloat(o.width);
-            o.height = parseFloat(o.height);
+            var w = o.width  = parseFloat(o.width);
+            var h = o.height = parseFloat(o.height);
 
             // Chart functions
             var charts = {
@@ -242,8 +242,8 @@
                     if (o.pieLabelPos == 'outside') {
                         canvasContain.addClass('visualize-pie-outside');
                     }
-                    var centerX = Math.round($canvas.width() / 2);
-                    var centerY = Math.round($canvas.height() / 2);
+                    var centerX = Math.round(w / 2);
+                    var centerY = Math.round(h / 2);
                     var radius = centerY - o.pieMargin;
                     var counter = 0.0;
                     var labels = $('<ul class="visualize-labels"></ul>')
@@ -301,8 +301,7 @@
                     //write X labels
                     var xInterval = $canvas.width() / (xLabels.length - 1);
                     var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-                        .width($canvas.width())
-                        .height($canvas.height())
+                        .width(w).height(h)
                         .insertBefore($canvas);
                     $.each(xLabels, function (i) {
                         var thisLi = $('<li><span>' + this + '</span></li>')
@@ -322,11 +321,10 @@
                             .addClass('label');
                     });
                     //write Y labels
-                    var yScale = $canvas.height() / totalYRange;
-                    var liBottom = $canvas.height() / (yLabels.length - 1);
+                    var yScale = h / totalYRange;
+                    var liBottom = h / (yLabels.length - 1);
                     var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-                        .width($canvas.width())
-                        .height($canvas.height())
+                        .width(w).height(h)
                         .insertBefore($canvas);
                     $.each(yLabels, function (i) {
                         var thisLi = $('<li><span>' + this + '</span></li>')
@@ -337,8 +335,7 @@
                         var topOffset = label.height() / -2;
                         if (i == 0) {
                             topOffset = -label.height();
-                        }
-                        else if (i == yLabels.length - 1) {
+                        }else if (i == yLabels.length - 1) {
                             topOffset = 0;
                         }
                         label
@@ -348,7 +345,7 @@
                     //start from the bottom left
                     ctx.translate(0, zeroLoc);
                     //iterate and draw
-                    $.each(dataGroups, function (h) {
+                    $.each(dataGroups, function () {
                         ctx.beginPath();
                         ctx.lineWidth = o.lineWeight;
                         ctx.lineJoin = 'round';
@@ -384,10 +381,9 @@
                     canvasContain.addClass('visualize-bar');
 
                     //write X labels
-                    var xInterval = $canvas.width() / (xLabels.length);
+                    var xInterval = w / (xLabels.length);
                     var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-                        .width($canvas.width())
-                        .height($canvas.height())
+                        .width(w).height(h)
                         .insertBefore($canvas);
 
                     $.each(xLabels, function (i) {
@@ -399,11 +395,10 @@
                     });
 
                     //write Y labels
-                    var yScale = $canvas.height() / totalYRange;
-                    var liBottom = $canvas.height() / (yLabels.length - 1);
+                    var yScale = h / totalYRange;
+                    var liBottom = h / (yLabels.length - 1);
                     var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-                        .width($canvas.width())
-                        .height($canvas.height())
+                        .width(w).height(h)
                         .insertBefore($canvas);
 
                     $.each(yLabels, function (i) {
@@ -422,40 +417,39 @@
                             .css('margin-top', topOffset)
                             .addClass('label');
                     });
+
                     //start from the bottom left
                     ctx.translate(0, zeroLoc);
                     //iterate and draw
-                    for (var h = 0; h < dataGroups.length; h++) {
+                    $.each(dataGroups, function (i, group) {
                         ctx.beginPath();
-                        var linewidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length;
-                        ctx.lineWidth = linewidth - (o.barMargin * 2);
-                        var points = dataGroups[h].points;
+                        var serieWidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length;
+                        ctx.lineWidth = serieWidth - (o.barMargin * 2);
 
-                        for (var i = 0; i < points.length; i++) {
-                            var xVal = ((i * xInterval) - o.barGroupMargin) + (h * linewidth) + linewidth / 2;
+                        $.each(group.points, function(j, val) {
+                            var xVal = ((j * xInterval) - o.barGroupMargin) + (i * serieWidth) + serieWidth / 2;
                             xVal += o.barGroupMargin * 2;
-                            var yVal = Math.round(-points[i] * yScale);
+                            var yVal = Math.round(-val * yScale);
                             if (yVal) {
                                 ctx.moveTo(xVal, 0);
                                 ctx.lineTo(xVal, yVal);
                             }
-                        }
-                        ctx.strokeStyle = dataGroups[h].color;
+                        });
+                        ctx.strokeStyle = group.color;
                         ctx.stroke();
                         ctx.closePath();
-                    }
+                    });
                 }
             };
 
             //create new canvas, set w&h attrs (not inline styles)
-            var $canvas = $("<canvas>").attr("height", o.height).attr("width", o.width);
+            var $canvas = $("<canvas>").attr("height", h).attr("width", w);
             //get title for chart
             var title = o.title || $table.find('caption').text();
 
             //create canvas wrapper div, set inline w&h, append
             var canvasContain = (container || $('<div class="visualize" role="img" aria-label="Chart representing data from the table: ' + title + '" />'))
-                .height(o.height)
-                .width(o.width)
+                .height(h).width(w)
                 .append($canvas);
 
             //scrape table (this should be cleaned up into an obj)
@@ -466,7 +460,7 @@
             var bottomValue = tableData.bottomValue();
             var memberTotals = tableData.memberTotals();
             var totalYRange = tableData.totalYRange();
-            var zeroLoc = o.height * (topValue / totalYRange);
+            var zeroLoc = h * (topValue / totalYRange);
             var xLabels = tableData.xLabels();
             var yLabels = tableData.yLabels(bottomValue, topValue);
 
