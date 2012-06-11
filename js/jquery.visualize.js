@@ -1,15 +1,17 @@
-/*
- * --------------------------------------------------------------------
- * jQuery Visualize plugin
- * Author: Scott Jehl, scott@filamentgroup.com
+/* --------------------------------------------------------------------
+ * jQuery Visualize 'Extended' plugin
+ * Original Author: Scott Jehl, scott@filamentgroup.com
  * Copyright (c) 2009 Filament Group
  * licensed under MIT (filamentgroup.com/examples/mit-license.txt)
+ * Extended version
+ * Author: Christophe Desguez, https://github.com/zipang
  * --------------------------------------------------------------------
  */
 (function ($) {
     $.visualize = {
         plugins:{} // additional chart scripts will load inside this namespace
     };
+
     // UTILITIES
     Array.max = function (arr) {
         return Math.max.apply(Array, arr);
@@ -30,25 +32,25 @@
         return (len ? Array.sum(arr) / len : 0);
     };
 
-    function createChart(charts, type, context) {
+    function drawChart(charts, type, context) {
 
         if (charts[type]) {
-            console.log("Executing existing chart " + type);
+            // One of the 4 basic predefined charts
             charts[type]();
 
         } else if ($.visualize.plugins[type]) {
-            $.visualize.plugins[type].apply(context); // call our external plugin with the passed context
+            // Allready loaded chart plugin
+            $.visualize.plugins[type].apply(context);
 
         } else {
-            // try to dynamically load a new type of chart from external plugin
-            console.log("Trying to load jquery.vizualize." + type + ".js");
-            $.getScript("./js/jquery.visualize." + type.split(/[-_]/)[0] + ".js",
+            // Try to dynamically load a new type of chart from external plugin
+            $.getScript("./js/plugins/jquery.visualize." + type.split(/[-_]/)[0] + ".js",
                 function loaded() {
                     $.visualize.plugins[type].apply(context);
                 }).fail(function (jqxhr, settings, exception) {
                     context.target.canvasContainer.remove();
                     if (console.log) console.log( "Failed to load jquery.vizualize plugin " + type
-                        + " in following location : ./js/jquery.visualize." + type.split(/[-_]/)[0] + ".js\n"
+                        + " in following location : ./js/plugins/jquery.visualize." + type.split(/[-_]/)[0] + ".js\n"
                         + exception );
                 });
         }
@@ -102,7 +104,6 @@
                         dataGroups[i].points_weight.push(values.length > 1 ? parseFloat(values[1]) : 1);
                     });
                 }
-                ;
             }
             return (this._dataGroups = dataGroups);
         },
@@ -209,8 +210,8 @@
             //configuration
             var o = $.extend({
                 type:'bar', //also available: area, pie, line
-                width:$(this).width(), //height of canvas - defaults to table height
-                height:$(this).height(), //height of canvas - defaults to table height
+                width:$table.width(), //height of canvas - defaults to table height
+                height:$table.height(), //height of canvas - defaults to table height
                 appendTitle:true, //table caption text is added to chart
                 title:null, //grabs from table caption if null
                 appendKey:true, //color key is added to chart
@@ -241,36 +242,37 @@
                     if (o.pieLabelPos == 'outside') {
                         canvasContain.addClass('visualize-pie-outside');
                     }
-                    var centerx = Math.round(canvas.width() / 2);
-                    var centery = Math.round(canvas.height() / 2);
-                    var radius = centery - o.pieMargin;
+                    var centerX = Math.round($canvas.width() / 2);
+                    var centerY = Math.round($canvas.height() / 2);
+                    var radius = centerY - o.pieMargin;
                     var counter = 0.0;
                     var labels = $('<ul class="visualize-labels"></ul>')
-                        .insertAfter(canvas);
-
+                        .insertAfter($canvas);
 
                     $.each(memberTotals, function (i, total) {
                         // Draw the pie pieces
-                        var fraction = (total <= 0 || isNaN(total)) ? 0 : total / dataSum;
-                        ctx.beginPath();
-                        ctx.moveTo(centerx, centery);
-                        ctx.arc(centerx, centery, radius,
-                            counter * Math.PI * 2 - Math.PI * 0.5,
-                            (counter + fraction) * Math.PI * 2 - Math.PI * 0.5,
-                            false);
-                        ctx.lineTo(centerx, centery);
-                        ctx.closePath();
-                        ctx.fillStyle = dataGroups[i].color;
-                        ctx.fill();
+                        var slice = (total <= 0 || isNaN(total)) ? 0 : total / dataSum;
+                        if (slice > 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(centerX, centerY);
+                            ctx.arc(centerX, centerY, radius,
+                                counter * Math.PI * 2 - Math.PI * 0.5,
+                                (counter + slice) * Math.PI * 2 - Math.PI * 0.5,
+                                false);
+                            ctx.lineTo(centerX, centerY);
+                            ctx.closePath();
+                            ctx.fillStyle = dataGroups[i].color;
+                            ctx.fill();
+                        }
 
                         // Draw labels
-                        var sliceMiddle = (counter + fraction / 2);
+                        var sliceMiddle = (counter + slice / 2);
                         var distance = o.pieLabelPos == 'inside' ? radius / 1.5 : radius + radius / 5;
-                        var labelx = Math.round(centerx + Math.sin(sliceMiddle * Math.PI * 2) * (distance));
-                        var labely = Math.round(centery - Math.cos(sliceMiddle * Math.PI * 2) * (distance));
-                        var leftRight = (labelx > centerx) ? 'right' : 'left';
-                        var topBottom = (labely > centery) ? 'bottom' : 'top';
-                        var percentage = parseFloat((fraction * 100).toFixed(2));
+                        var labelX = Math.round(centerX + Math.sin(sliceMiddle * Math.PI * 2) * (distance));
+                        var labelY = Math.round(centerY - Math.cos(sliceMiddle * Math.PI * 2) * (distance));
+                        var leftRight = (labelX > centerX) ? 'right' : 'left';
+                        var topBottom = (labelY > centerY) ? 'bottom' : 'top';
+                        var percentage = parseFloat((slice * 100).toFixed(2));
 
                         if (percentage) {
                             var labelval = (o.pieLabelsAsPercent) ? percentage + '%' : total;
@@ -279,7 +281,7 @@
                                 .css(topBottom, 0);
                             var label = $('<li class="visualize-label-pos"></li>')
                                 .appendTo(labels)
-                                .css({left:labelx, top:labely})
+                                .css({left:labelX, top:labelY})
                                 .append(labeltext);
                             labeltext
                                 .css('font-size', radius / 8)
@@ -289,23 +291,19 @@
                                 labeltext.css('color', dataGroups[i].textColor);
                             }
                         }
-                        counter += fraction;
+                        counter += slice;
                     });
                 },
 
                 line:function (area) {
-                    if (area) {
-                        canvasContain.addClass('visualize-area');
-                    }
-                    else {
-                        canvasContain.addClass('visualize-line');
-                    }
+                    canvasContain.addClass((area) ? 'visualize-area' : 'visualize-line');
+
                     //write X labels
-                    var xInterval = canvas.width() / (xLabels.length - 1);
+                    var xInterval = $canvas.width() / (xLabels.length - 1);
                     var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-                        .width(canvas.width())
-                        .height(canvas.height())
-                        .insertBefore(canvas);
+                        .width($canvas.width())
+                        .height($canvas.height())
+                        .insertBefore($canvas);
                     $.each(xLabels, function (i) {
                         var thisLi = $('<li><span>' + this + '</span></li>')
                             .prepend('<span class="line" />')
@@ -324,12 +322,12 @@
                             .addClass('label');
                     });
                     //write Y labels
-                    var yScale = canvas.height() / totalYRange;
-                    var liBottom = canvas.height() / (yLabels.length - 1);
+                    var yScale = $canvas.height() / totalYRange;
+                    var liBottom = $canvas.height() / (yLabels.length - 1);
                     var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-                        .width(canvas.width())
-                        .height(canvas.height())
-                        .insertBefore(canvas);
+                        .width($canvas.width())
+                        .height($canvas.height())
+                        .insertBefore($canvas);
                     $.each(yLabels, function (i) {
                         var thisLi = $('<li><span>' + this + '</span></li>')
                             .prepend('<span class="line" />')
@@ -386,11 +384,11 @@
                     canvasContain.addClass('visualize-bar');
 
                     //write X labels
-                    var xInterval = canvas.width() / (xLabels.length);
+                    var xInterval = $canvas.width() / (xLabels.length);
                     var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-                        .width(canvas.width())
-                        .height(canvas.height())
-                        .insertBefore(canvas);
+                        .width($canvas.width())
+                        .height($canvas.height())
+                        .insertBefore($canvas);
 
                     $.each(xLabels, function (i) {
                         var thisLi = $('<li><span class="label">' + this + '</span></li>')
@@ -401,12 +399,12 @@
                     });
 
                     //write Y labels
-                    var yScale = canvas.height() / totalYRange;
-                    var liBottom = canvas.height() / (yLabels.length - 1);
+                    var yScale = $canvas.height() / totalYRange;
+                    var liBottom = $canvas.height() / (yLabels.length - 1);
                     var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-                        .width(canvas.width())
-                        .height(canvas.height())
-                        .insertBefore(canvas);
+                        .width($canvas.width())
+                        .height($canvas.height())
+                        .insertBefore($canvas);
 
                     $.each(yLabels, function (i) {
                         var thisLi = $('<li><span>' + this + '</span></li>')
@@ -429,17 +427,18 @@
                     //iterate and draw
                     for (var h = 0; h < dataGroups.length; h++) {
                         ctx.beginPath();
-                        var linewidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length; //removed +1
-                        var strokeWidth = linewidth - (o.barMargin * 2);
-                        ctx.lineWidth = strokeWidth;
+                        var linewidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length;
+                        ctx.lineWidth = linewidth - (o.barMargin * 2);
                         var points = dataGroups[h].points;
-                        var integer = 0;
+
                         for (var i = 0; i < points.length; i++) {
-                            var xVal = (integer - o.barGroupMargin) + (h * linewidth) + linewidth / 2;
+                            var xVal = ((i * xInterval) - o.barGroupMargin) + (h * linewidth) + linewidth / 2;
                             xVal += o.barGroupMargin * 2;
-                            ctx.moveTo(xVal, 0);
-                            ctx.lineTo(xVal, Math.round(-points[i] * yScale));
-                            integer += xInterval;
+                            var yVal = Math.round(-points[i] * yScale);
+                            if (yVal) {
+                                ctx.moveTo(xVal, 0);
+                                ctx.lineTo(xVal, yVal);
+                            }
                         }
                         ctx.strokeStyle = dataGroups[h].color;
                         ctx.stroke();
@@ -449,10 +448,7 @@
             };
 
             //create new canvas, set w&h attrs (not inline styles)
-            var canvasNode = document.createElement("canvas");
-            canvasNode.setAttribute('height', o.height);
-            canvasNode.setAttribute('width', o.width);
-            var canvas = $(canvasNode);
+            var $canvas = $("<canvas>").attr("height", o.height).attr("width", o.width);
             //get title for chart
             var title = o.title || $table.find('caption').text();
 
@@ -460,12 +456,11 @@
             var canvasContain = (container || $('<div class="visualize" role="img" aria-label="Chart representing data from the table: ' + title + '" />'))
                 .height(o.height)
                 .width(o.width)
-                .append(canvas);
+                .append($canvas);
 
             //scrape table (this should be cleaned up into an obj)
             var tableData = new TableData($table, o);
             var dataGroups = tableData.dataGroups();
-            var allData = tableData.allData();
             var dataSum = tableData.dataSum();
             var topValue = tableData.topValue();
             var bottomValue = tableData.bottomValue();
@@ -508,18 +503,18 @@
             }
             if (typeof(G_vmlCanvasManager) != 'undefined') {
                 G_vmlCanvasManager.init();
-                G_vmlCanvasManager.initElement(canvas[0]);
+                G_vmlCanvasManager.initElement($canvas[0]);
             }
 
             //set up the drawing board
-            var ctx = canvas[0].getContext('2d');
+            var ctx = $canvas[0].getContext('2d');
 
             //create chart
-            createChart(charts, o.type, {
+            drawChart(charts, o.type, {
                 target:{
                     canvasContainer:canvasContain,
                     canvasContext:ctx,
-                    canvas:canvas
+                    canvas:$canvas
                 },
                 data:tableData,
                 options:o
