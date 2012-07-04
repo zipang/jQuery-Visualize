@@ -43,7 +43,7 @@
             .insertBefore(canvas);
 
         $.each(xLabels, function(i, label) {
-            var $label = $("<span class='label'></span>").html(label);
+            var $label = $("<span>").addClass("label").html(label);
             $("<li>")
                 .css("left", xInterval * i)
                 .prepend("<span class='line' />")
@@ -70,21 +70,15 @@
             .insertBefore(canvas);
 
         $.each(yLabels, function(i, label){
-            var $label = $("<span class='label'></span>").html(label);
+            var $label = $("<span>").addClass("label").html(label);
             $("<li>")
                 .css("bottom", liBottom * i)
                 .prepend("<span class='line' />")
                 .append($label)
                 .prependTo(ylabelsUL);
 
-            // Adjust the vertical position of first and last labels
-            var topOffset = $label.height() / -2;
-            if (i == 0) {
-                topOffset = -$label.height();
-            } else if (i == yLabels.length-1) {
-                topOffset = 0;
-            }
-            $label.css('margin-top', topOffset);
+            // Adjust the vertical position of label
+            $label.css('margin-top', $label.height() / -2);
         });
 
         //iterate and draw
