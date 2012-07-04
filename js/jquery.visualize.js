@@ -424,21 +424,15 @@
 						.width(w).height(h)
 						.insertBefore($canvas);
 
-					$.each(yLabels, function (i) {
-						var thisLi = $('<li><span>' + this + '</span></li>')
-							.prepend('<span class="line" />')
+					$.each(yLabels, function (i, label) {
+						var $label = $("<span>").addClass("label").html(label);
+						var thisLi = $("<li>")
 							.css('bottom', liBottom * i)
+							.prepend('<span class="line" />')
+                            .append($label)
 							.prependTo(ylabelsUL);
-						var label = thisLi.find('span:not(.line)');
-						var topOffset = label.height() / -2;
-						if (i == 0) {
-							topOffset = -label.height();
-						} else if (i == yLabels.length - 1) {
-							topOffset = 0;
-						}
-						label
-							.css('margin-top', topOffset)
-							.addClass('label');
+
+                        $label.css('margin-top', $label.height() / -2);
 					});
 
 					//start from the bottom left
