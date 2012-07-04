@@ -12,4 +12,6 @@ $(function(){
 
 	$('table').visualize({type: 'dots', width: '420px', height: '200px', yLabelInterval: 50});
 	$('table').visualize({type: 'dots_w', width: '420px', height: '200px', yLabelInterval: 50});
+
+    $('table').visualize({type: 'hbar', width: '420px', height: '400px', yLabelInterval: 100});
 });
