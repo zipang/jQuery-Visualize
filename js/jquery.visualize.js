@@ -41,7 +41,7 @@
 
 		if (charts[type]) {
 			// One of the 4 basic predefined charts
-			charts[type]();
+			charts[type].apply(context);
 
 		} else if ($.visualize.plugins[type]) {
 			// Allready loaded chart plugin
@@ -397,7 +397,7 @@
 				},
 
 				area:function () {
-					this.line(true);
+          charts.line(true);
 				},
 
 				bar:function () {
@@ -417,7 +417,7 @@
 							.appendTo(xlabelsUL);
 					});
 
-					//write Y labels
+					// write Y labels
 					var yScale = h / totalYRange;
 					var liBottom = h / (yLabels.length - 1);
 					var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
