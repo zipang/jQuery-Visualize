@@ -12,10 +12,14 @@
             ctx = this.target.canvasContext,
             canvas = this.target.canvas,
             w = canvas.width(), h = canvas.height(),
-            dataGroups = this.data.dataGroups(),
-            xLabels = this.data.xLabels(),
-            totalYRange = this.data.topValue(),
-            yLabels = this.data.yLabels(0, totalYRange);
+            tabledata = this.data,
+
+            data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
+            dataMax = data.map(Array.max),
+            dataRange = Array.max(dataMax),
+
+				    xLabels = $.visualize.getRangeLabels(0, dataRange, 5),
+				    yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
         // Display data range as X labels
         var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
@@ -25,9 +29,9 @@
         ctx.beginPath();
         ctx.lineWidth = 0.1;
 
-        var xInterval = w / (yLabels.length - 1);
+        var xInterval = w / (xLabels.length - 1);
 
-        $.each(yLabels, function(i, label) {
+        $.each(xLabels, function(i, label) {
 
             var $label = $("<span>").addClass("label").html(label);
             $("<li>")
@@ -37,7 +41,7 @@
                 .appendTo(xlabelsUL);
 
             if (i > 0) {
-                $label.css("margin-left", $label.width() / -2);
+                $label.css("margin-left", -0.5 * $label.width());
             }
 
             ctx.moveTo(xInterval * (i + 1), 0);
@@ -57,20 +61,20 @@
         ctx.beginPath();
         ctx.lineWidth = 0.1;
 
-        var liHeight = h / (xLabels.length);
+        var liHeight = h / (yLabels.length);
 
-        $.each(xLabels, function(i, label) {
+        $.each(yLabels, function(i, label) {
             var $label = $("<span>").addClass("label").html(label);
             $("<li>")
-                .css("bottom", liHeight * i + liHeight / 2)
+                .css({"top": liHeight*i + liHeight/2, "height": liHeight/2})
                 .append($label)
-                .prependTo(ylabelsUL);
+                .appendTo(ylabelsUL);
 
-            // Reposition the label by shifting it by half the height of its container
-            $label.css('margin-top', $label.height() / -2);
+            // Slitghly reposition the label to center it on the median line
+            $label.css('margin-top', -0.5 * $label.height());
 
-            ctx.moveTo(0, h - liHeight * i);
-            ctx.lineTo(w, h - liHeight * i);
+            ctx.moveTo(0, liHeight * (i + 1));
+            ctx.lineTo(w, liHeight * (i + 1));
         });
 
         ctx.strokeStyle = "#fff";
@@ -78,24 +82,21 @@
         ctx.closePath();
 
         // iterate on the series and draw the bars
-        var xScale = w / totalYRange;
-        var yInterval = h / (xLabels.length);
+        var xScale = w / dataRange;
+        var yBandHeight = h / (yLabels.length);
 
-        for (var i = 0; i < dataGroups.length; i++) {
+        for (var i = 0; i < data.length; i++) {
             ctx.beginPath();
-            var linewidth = (yInterval - o.barGroupMargin * 2) / dataGroups.length; //removed +1 // bar height
-            var strokeWidth = linewidth - (o.barMargin * 2);
-            ctx.lineWidth = strokeWidth;
-            var points = dataGroups[i].points;
+            var linewidth = (yBandHeight - o.barGroupMargin*2) / data.length; // a single bar width (with margins)
+            ctx.lineWidth = linewidth - (o.barMargin * 2);
+            var serie = data[i];
 
-            for (var j = 0; j < points.length; j++) {
-                var yVal = (j * yInterval - o.barGroupMargin) + (i * linewidth) + linewidth / 2;
-                yVal += o.barGroupMargin * 2;
-
-                ctx.moveTo(0, h - yVal);
-                ctx.lineTo(Math.round(points[j] * xScale) + 0.1, h - yVal);
+            for (var j = 0; j < serie.length; j++) {
+                var yPos = j*yBandHeight + o.barGroupMargin + i*linewidth + linewidth/2;
+                ctx.moveTo(0, yPos);
+                ctx.lineTo(Math.round(serie[j] * xScale) + 0.1, yPos);
             }
-            ctx.strokeStyle = dataGroups[i].color;
+            ctx.strokeStyle = o.colors[i];
             ctx.stroke();
             ctx.closePath();
         }
