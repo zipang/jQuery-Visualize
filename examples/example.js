@@ -8,10 +8,12 @@ $(function(){
 	$('table').visualize({type: 'radar', width: '420px'});
 
 	$('table').visualize({type: 'pilebar_100', width: '420px', height: '200px', yLabelInterval: 50});
-    $('table').visualize({type: 'pilebar', width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize({type: 'pilebar', width: '420px', height: '200px', yLabelInterval: 50});
 
 	$('table').visualize({type: 'dots', width: '420px', height: '200px', yLabelInterval: 50});
 	$('table').visualize({type: 'dots_w', width: '420px', height: '200px', yLabelInterval: 50});
 
-    $('table').visualize({type: 'hbar', width: '420px', height: '400px', yLabelInterval: 100});
+	$('table').visualize({type: 'hbar', width: '420px', height: '400px', yLabelInterval: 100});
+	$('table').visualize({type: 'hpiledbar', width: '420px', height: '200px'});
+
 });
