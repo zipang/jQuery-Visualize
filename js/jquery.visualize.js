@@ -72,6 +72,47 @@
 	}
 
 	TableData.prototype = {
+
+		parse: function() {
+			if (this.parsed) return this;
+
+			var rowFilter = this.options.rowFilter,
+					colFilter = this.options.colFilter,
+					lines = [], lineHeaders = [], columnHeaders = [];
+
+			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
+				var cells = [];
+				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
+					cells.push((i == 0) || (j == 0)? $(td).text() : parseFloat($(td).text()));
+				});
+				if (i == 0) {
+					cells.shift();
+					columnHeaders = cells;
+				} else {
+					lineHeaders.push(cells.shift());
+					lines.push(cells);
+				}
+			});
+
+			var lcount = lines.length,
+					ccount = lines[0].length,
+					columns = [];
+			for (var j = 0; j < ccount; j++) {
+				var columnValues = [];
+				for (var i = 0; i < lcount; i++) {
+					columnValues.push(lines[i][j]);
+				}
+				columns.push(columnValues);
+			}
+
+			this.lineHeaders = lineHeaders;
+			this.columnHeaders = columnHeaders;
+			this.lines = lines;
+			this.columns = columns;
+			this.parsed = true;
+			return this;
+		},
+
 		dataGroups:function () {
 			if (this._dataGroups) return this._dataGroups; // stored result
 
@@ -472,7 +513,7 @@
 				.append($canvas);
 
 			//scrape table (this should be cleaned up into an obj)
-			var tableData = new TableData($table, o);
+			var tableData = new TableData($table, o).parse();
 			var dataGroups = tableData.dataGroups();
 			var dataSum = tableData.dataSum();
 			var topValue = tableData.topValue();

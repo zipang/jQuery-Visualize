@@ -17,7 +17,7 @@
             totalYRange = this.data.topValue(),
             yLabels = this.data.yLabels(0, totalYRange);
 
-        // X labels
+        // Display data range as X labels
         var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
             .width(w).height(h)
             .insertBefore(canvas);
@@ -49,7 +49,7 @@
         ctx.stroke();
         ctx.closePath();
 
-        // Y labels
+        // Display categories as Y labels
         var ylabelsUL = $("<ul>").addClass("visualize-labels-y")
             .width(w).height(h)
             .insertBefore(canvas);
@@ -77,7 +77,7 @@
         ctx.stroke();
         ctx.closePath();
 
-        //iterate and draw
+        // iterate on the series and draw the bars
         var xScale = w / totalYRange;
         var yInterval = h / (xLabels.length);
 
