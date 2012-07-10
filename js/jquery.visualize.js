@@ -35,6 +35,27 @@
 	};
 
 	/**
+	 * Get a regular serie of numbers from @param first to @param last in n steps
+	 * @param ticks number of steps (ticks). Default to 5
+	 * @return {Array}
+	 */
+	$.visualize.getRangeLabels = function (first, last, ticks) {
+		var ticks  = ticks || 5,
+		    slices = ticks - 1,
+		    domain = last - first,
+		    labels = [];
+
+		labels.push(first);
+
+		for (var i = 1; i < slices; i++) {
+			labels.push(Math.ceil(first + domain/slices*i));
+		}
+
+		labels.push(last);
+		return labels;
+	};
+
+	/**
 	 * Find the plugin to draw a specific chart
 	 */
 	function drawChart(charts, type, context) {
@@ -235,28 +256,12 @@
 		},
 
 		yLabels:function (start, end) {
-			var totalYRange = end - start,
-				labels = [];
-			labels.push(start);
 			var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
-			var incr = Math.ceil(totalYRange / numLabels) || 1;
-			while (labels[labels.length - 1] < end - incr) {
-				labels.push(labels[labels.length - 1] + incr);
-			}
-			labels.push(end);
-			return labels;
+			return $.visualize.getRangeLabels(start, end, numLabels);
 		},
 
 		yLabels100:function () {
-			if (this._yLabels100) return this._yLabels100;
-			var labels = [0];
-			var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
-			var incr = Math.ceil(100 / numLabels) || 1;
-			while (labels[labels.length - 1] < 100 - incr) {
-				labels.push(labels[labels.length - 1] + incr);
-			}
-			labels.push(100);
-			return (this._yLabels100 = labels);
+			return $.visualize.getRangeLabels(0, 100, 5);
 		}
 	}; // TableData prototype
 
@@ -522,30 +527,8 @@
 			var totalYRange = tableData.totalYRange();
 			var zeroLoc = h * (topValue / totalYRange);
 			var xLabels = tableData.xLabels();
-			var keys = tableData.keys();
 			var yLabels = tableData.yLabels(bottomValue, topValue);
 
-			//title/key container
-			if (o.appendTitle || o.appendKey) {
-				var $infoContainer = $("<div>").addClass("visualize-info").appendTo($canvasContainer);
-
-				//append title
-				if (o.appendTitle) {
-					$("<div>").addClass("visualize-title").html(title).appendTo($infoContainer);
-				}
-
-				//append color keys of the series
-				if (o.appendKey) {
-					var $keys = $("<ul>").addClass("visualize-key");
-					$.each(keys, function(i, key) {
-						$("<li>")
-							.append($("<span>").addClass("visualize-key-color").css("background", dataGroups[i].color))
-							.append($("<span>").addClass("visualize-key-label").html(key))
-							.appendTo($keys)
-					});
-					$keys.appendTo($infoContainer);
-				}
-			}
 
 			//append new canvas to page
 			if (!container) {
@@ -569,6 +552,29 @@
 				data:tableData,
 				options:o
 			});
+
+
+      //title/key container
+      if (o.appendTitle || o.appendKey) {
+        var $infoContainer = $("<div>").addClass("visualize-info").appendTo($canvasContainer);
+
+        //append title
+        if (o.appendTitle) {
+          $("<div>").addClass("visualize-title").html(title).appendTo($infoContainer);
+        }
+
+        //append color keys of the series
+        if (o.appendKey) {
+          var $keys = $("<ul>").addClass("visualize-key");
+          $.each(tableData.keys(), function(i, key) {
+            $("<li>")
+              .append($("<span>").addClass("visualize-key-color").css("background", o.colors[i]))
+              .append($("<span>").addClass("visualize-key-label").html(key))
+              .appendTo($keys)
+          });
+          $keys.appendTo($infoContainer);
+        }
+      }
 
 			//clean up some doubled lines that sit on top of canvas borders (done via JS due to IE)
 			$('.visualize-line li:first-child span.line, .visualize-line li:last-child span.line, .visualize-area li:first-child span.line, .visualize-area li:last-child span.line, .visualize-bar li:first-child span.line,.visualize-bar .visualize-labels-y li:last-child span.line').css('border', 'none');
