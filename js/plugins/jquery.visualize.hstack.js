@@ -1,38 +1,46 @@
 /**
- * Piled bars charts for the jquery Visualize plugin 2.0
+ * Horizontal stacked bars charts for the jquery Visualize plugin 2.0
  *
- * Data are represented by a colored portions in a vertival bar.
+ * Data are represented by colored portions inside an horizontal bar.
  * The data can be normalized to a 0..100 scale so that each serie can be easily compared.
  */
 (function define() {
 
-    $.visualize.plugins.hpiledbar = function () {
+    $.visualize.plugins.hstack = function () {
 
         drawPile.call(this, false);
     };
 
-    $.visualize.plugins.hpiledbar_100 = function () {
+    $.visualize.plugins.hstack_100 = function () {
 
         drawPile.call(this, true);
     };
 
     function drawPile(normalized) {
         var o = this.options,
-						container = this.target.canvasContainer.addClass("visualize-bar"),
+						container = this.target.canvasContainer.addClass("visualize-hstack"),
 						ctx = this.target.canvasContext,
 						canvas = this.target.canvas,
-						w = canvas.width(), h = canvas.height();
-						yLabels = (o.parseDirection == 'y') ? this.data.lineHeaders : this.data.columnHeaders,
-						data = (o.parseDirection == 'y') ? this.data.lines : this.data.columns,
+						w = canvas.width(), h = canvas.height(),
+            tabledata = this.data,
+						yLabels = (o.parseDirection == 'x') ? tabledata.lineHeaders : tabledata.columnHeaders,
+						data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
 						dataSums = data.map(Array.sum),
-						dataRange = Array.max(dataSums),
-						xLabels = (normalized ? this.data.yLabels100() : this.data.yLabels(0, dataRange));
+						dataRange = (normalized ? 100 : Array.max(dataSums)),
+						xLabels = $.visualize.getRangeLabels(0, dataRange, (normalized ? 5 : 7));
+
+        this.data.keys = (o.parseDirection == 'x') ?
+          function() {return tabledata.columnHeaders;} :
+          function() {return tabledata.lineHeaders;};
 
         // Display data range as X labels
-        var xInterval = w / (xLabels.length);
+        var xInterval = w / (xLabels.length - 1);
         var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
             .width(w).height(h)
             .insertBefore(canvas);
+
+        ctx.beginPath();
+        ctx.lineWidth = 0.1;
 
         $.each(xLabels, function(i, label) {
             var $label = $("<span>").addClass("label").html(label);
@@ -42,7 +50,17 @@
                 // .prepend("<span class='line' />")
                 .append($label)
                 .appendTo(xlabelsUL);
+
+            $label.css((i == 0) ? {"text-align": "left"} : {"margin-left": -0.5 * $label.width()});
+
+            ctx.moveTo(xInterval * (i + 1), 0);
+            ctx.lineTo(xInterval * (i + 1), h);
+
         });
+
+        ctx.strokeStyle = "#fff";
+        ctx.stroke();
+        ctx.closePath();
 
         // Display categories as Y labels
         var ylabelsUL = $("<ul>").addClass("visualize-labels-y")
