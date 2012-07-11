@@ -1,20 +1,20 @@
 // Run the script on DOM ready:
 $(function(){
-	$('table').visualize({type: 'pie', height: '300px', width: '420px'});
-	$('table').visualize({type: 'bar', width: '420px'});
-	$('table').visualize({type: 'area', width: '420px'});
-	$('table').visualize({type: 'line', width: '420px'});
+	$('table').visualize('pie', {height: '300px', width: '420px'});
+	$('table').visualize('bar', {width: '420px'});
+	$('table').visualize('area', {width: '420px'});
+	$('table').visualize('line', {width: '420px'});
 
-	$('table').visualize({type: 'radar', width: '420px'});
+	$('table').visualize('radar', {width: '420px'});
 
-	$('table').visualize({type: 'pilebar_100', width: '420px', height: '200px', yLabelInterval: 50});
-	$('table').visualize({type: 'pilebar', width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('pilebar_100', {width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('pilebar', {width: '420px', height: '200px', yLabelInterval: 50});
 
-	$('table').visualize({type: 'dots', width: '420px', height: '200px', yLabelInterval: 50});
-	$('table').visualize({type: 'dots_w', width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('dots', {width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('dots_w', {width: '420px', height: '200px', yLabelInterval: 50});
 
-	$('table').visualize({type: 'hbar', width: '420px', height: '400px', yLabelInterval: 100});
-	$('table').visualize({type: 'hstack', width: '420px', height: '200px'});
-  $('table').visualize({type: 'hstack_100', width: '420px', height: '200px'});
+	$('table').visualize('hbar', {width: '420px', height: '400px', yLabelInterval: 100});
+	$('table').visualize('hstack', {width: '420px', height: '200px'});
+	$('table').visualize('hstack_100', {width: '420px', height: '200px'});
 
 });

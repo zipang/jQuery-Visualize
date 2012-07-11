@@ -98,8 +98,8 @@
 			if (this.parsed) return this;
 
 			var rowFilter = this.options.rowFilter,
-					colFilter = this.options.colFilter,
-					lines = [], lineHeaders = [], columnHeaders = [];
+				colFilter = this.options.colFilter,
+				lines = [], lineHeaders = [], columnHeaders = [];
 
 			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
 				var cells = [];
@@ -256,7 +256,7 @@
 		},
 
 		yLabels:function (start, end) {
-			var numLabels = Math.round(this.options.height / this.options.yLabelInterval);
+			var numLabels = this.options.ticks || Math.round(this.options.height / this.options.yLabelInterval);
 			return $.visualize.getRangeLabels(start, end, numLabels);
 		},
 
@@ -271,6 +271,11 @@
 	 * $("table.pie").visualize({type: 'pie'})
 	 */
 	$.fn.visualize = function(options, container) {
+
+		if (typeof options == "string") { // visualize(type, options, container)
+			options = $.extend({}, container, {type: options});
+			container = arguments[2];
+		}
 
 		return $(this).each(function () {
 
