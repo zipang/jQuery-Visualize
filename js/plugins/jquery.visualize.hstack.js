@@ -36,7 +36,7 @@
 			tableData = this.data,
 
 			data = (o.parseDirection == 'x') ? tableData.lines : tableData.columns,
-			dataSums = data.map(Array.sum),
+			dataSums = $.map(data, Array.sum),
 			dataRange = (o.normalize ? 100 : Array.max(dataSums)),
 			xLabels = $.visualize.getRangeLabels(0, dataRange, o.ticks),
 			yLabels = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;

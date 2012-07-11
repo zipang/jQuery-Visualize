@@ -3,7 +3,6 @@
  *
  * Data are represented by horizontal bars.
  */
-
 (function define() {
     $.visualize.plugins.hbar = function () {
 
@@ -15,11 +14,11 @@
             tabledata = this.data,
 
             data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
-            dataMax = data.map(Array.max),
+            dataMax = $.map(data, Array.max),
             dataRange = Array.max(dataMax),
 
-				    xLabels = $.visualize.getRangeLabels(0, dataRange, 5),
-				    yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
+			xLabels = $.visualize.getRangeLabels(0, dataRange, 5),
+			yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
         // Display data range as X labels
         var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
