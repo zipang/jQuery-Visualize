@@ -5,5 +5,7 @@
 .idea/
 # local experimentations
 lab/
+# local versions of libraries
+lib/
 # EditPlus backups
 *.*~
