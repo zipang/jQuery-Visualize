@@ -14,10 +14,11 @@
 			tabledata = this.data,
 
 			data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
-			dataMax = $.map(data, Array.max),
-			dataRange = Array.max(dataMax),
+			max = Math.ceil(Array.max($.map(data, Array.max))),
+			min = Math.floor(Array.min($.map(data, Array.min))),
+			range = max - ((min > 0) ? (min = 0) : min),
 
-			xLabels = $.visualize.getRangeLabels(0, dataRange, 5),
+			xLabels = $.visualize.getRangeLabels(min, max, o.ticks),
 			yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
 		// Display data range as X labels
@@ -48,7 +49,7 @@
 
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
@@ -76,13 +77,14 @@
 			ctx.lineTo(w, liHeight * (i + 1));
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
 		// iterate on the series and draw the bars
-		var xScale = w / dataRange;
-		var yBandHeight = h / (yLabels.length);
+		var xScale = w / range,
+			yBandHeight = h / (yLabels.length),
+			zeroPos = ((min < 0) ? -min : 0) * xScale; // Position of the 0 on the X axis
 
 		for (var i = 0; i < data.length; i++) {
 			ctx.beginPath();
@@ -92,8 +94,8 @@
 
 			for (var j = 0; j < serie.length; j++) {
 				var yPos = j*yBandHeight + o.barGroupMargin + i*linewidth + linewidth/2;
-				ctx.moveTo(0, yPos);
-				ctx.lineTo(Math.round(serie[j] * xScale) + 0.1, yPos);
+				ctx.moveTo(zeroPos, yPos);
+				ctx.lineTo(Math.round(serie[j] * xScale) + zeroPos, yPos);
 			}
 			ctx.strokeStyle = o.colors[i];
 			ctx.stroke();
