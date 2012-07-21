@@ -4,19 +4,14 @@
 	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 	<title>Charting</title>
 	<link href="css/basic.css" type="text/css" rel="stylesheet" />
-	<script type="text/javascript" src="http://filamentgroup.github.com/EnhanceJS/enhance.js"></script>
+	<script type="text/javascript" src="lib/enhance.js"></script>
 	<script type="text/javascript">
 		// Run capabilities test
 		enhance({
 			loadScripts: [
 				{src: 'examples/excanvas.js', iecondition: 'all'},
-				'http://code.jquery.com/jquery-1.5.2.min.js',
-				'js/jquery.visualize.js',
-				'js/plugins/jquery.visualize.radar.js',
-				'js/plugins/jquery.visualize.pilebar.js',
-				'js/plugins/jquery.visualize.dots.js',
-				'js/plugins/jquery.visualize.hbar.js',
-				'js/plugins/jquery.visualize.hstack.js',
+				'lib/jquery-1.4.4.min.js',
+				'dist/jquery.visualize.pack.min.js',
 				'examples/example.js'
 			],
 			loadStyles: [
