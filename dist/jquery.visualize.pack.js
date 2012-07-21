@@ -40,15 +40,21 @@
 	 * @return {Array}
 	 */
 	$.visualize.getRangeLabels = function (first, last, ticks) {
-		var ticks  = ticks || 5,
+		var domain = last - first,
+			ticks  = (ticks >= domain) ? (domain + 1) : ticks,
 		    slices = ticks - 1,
-		    domain = last - first,
-		    labels = [];
+
+		    val, labels = [];
 
 		labels.push(first);
 
 		for (var i = 1; i < slices; i++) {
-			labels.push(Math.ceil(first + domain/slices*i));
+			val = first + domain / slices * i;
+			if (Math.abs(val) < 10) {
+				labels.push((val % 1 == 0) ? val : Math.ceil(val * 100) / 100); // display 2 digits when precision needed
+			} else {
+				labels.push(Math.floor(val));
+			}
 		}
 
 		labels.push(last);
@@ -98,8 +104,8 @@
 			if (this.parsed) return this;
 
 			var rowFilter = this.options.rowFilter,
-				colFilter = this.options.colFilter,
-				lines = [], lineHeaders = [], columnHeaders = [];
+			    colFilter = this.options.colFilter,
+			    lines = [], lineHeaders = [], columnHeaders = [];
 
 			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
 				var cells = [];
@@ -116,8 +122,8 @@
 			});
 
 			var lcount = lines.length,
-					ccount = lines[0].length,
-					columns = [];
+			    ccount = lines[0].length,
+			    columns = [];
 			for (var j = 0; j < ccount; j++) {
 				var columnValues = [];
 				for (var i = 0; i < lcount; i++) {
@@ -256,8 +262,7 @@
 		},
 
 		yLabels:function (start, end) {
-			var numLabels = this.options.ticks || Math.round(this.options.height / this.options.yLabelInterval);
-			return $.visualize.getRangeLabels(start, end, numLabels);
+			return $.visualize.getRangeLabels(start, end, this.options.ticks);
 		},
 
 		yLabels100:function () {
@@ -292,6 +297,7 @@
 				rowFilter:' ',
 				colFilter:' ',
 				colors:['#be1e2d', '#666699', '#92d5ea', '#ee8310', '#8d10ee', '#5a3b16', '#26a4ed', '#f45a90', '#e9e744'],
+				bgcolors:["#777", "#aaa", "#eee"],
 				textColors:[], //corresponds with colors array. null/undefined items will fall back to CSS
 				parseDirection:'x', //which direction to parse the table data
 
@@ -302,12 +308,15 @@
 				lineWeight:4, //for line and area - stroke weight
 				barGroupMargin:10,
 				barMargin:1, //space around bars in bar chart (added to both sides of bar)
+
 				yLabelInterval:30 //distance between y labels
 			}, options);
 
 			//reset width, height to numbers
 			var w = o.width  = parseFloat(o.width);
 			var h = o.height = parseFloat(o.height);
+
+			o.ticks = +o.ticks || Math.ceil(h / o.yLabelInterval);
 
 			// Build-in Chart functions
 			var charts = {
@@ -448,65 +457,7 @@
 				},
 
 				area:function () {
-          charts.line(true);
-				},
-
-				bar:function () {
-					$canvasContainer.addClass('visualize-bar');
-
-					//write X labels
-					var xInterval = w / (xLabels.length);
-					var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-						.width(w).height(h)
-						.insertBefore($canvas);
-
-					$.each(xLabels, function (i) {
-						var thisLi = $('<li><span class="label">' + this + '</span></li>')
-							.prepend('<span class="line" />')
-							.css('left', xInterval * i)
-							.width(xInterval)
-							.appendTo(xlabelsUL);
-					});
-
-					// write Y labels
-					var yScale = h / totalYRange;
-					var liBottom = h / (yLabels.length - 1);
-					var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-						.width(w).height(h)
-						.insertBefore($canvas);
-
-					$.each(yLabels, function (i, label) {
-						var $label = $("<span>").addClass("label").html(label);
-						var thisLi = $("<li>")
-							.css('bottom', liBottom * i)
-							.prepend('<span class="line" />')
-                            .append($label)
-							.prependTo(ylabelsUL);
-
-                        $label.css('margin-top', $label.height() / -2);
-					});
-
-					//start from the bottom left
-					ctx.translate(0, zeroLoc);
-					//iterate and draw
-					$.each(dataGroups, function (i, group) {
-						ctx.beginPath();
-						var serieWidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length;
-						ctx.lineWidth = serieWidth - (o.barMargin * 2);
-
-						$.each(group.points, function(j, val) {
-							var xVal = ((j * xInterval) - o.barGroupMargin) + (i * serieWidth) + serieWidth / 2;
-							xVal += o.barGroupMargin * 2;
-							var yVal = Math.round(-val * yScale);
-							if (yVal) {
-								ctx.moveTo(xVal, 0);
-								ctx.lineTo(xVal, yVal);
-							}
-						});
-						ctx.strokeStyle = group.color;
-						ctx.stroke();
-						ctx.closePath();
-					});
+          			charts.line(true);
 				}
 			};
 
@@ -593,6 +544,93 @@
 		}).next(); //returns canvas(es)
 	};
 })(jQuery);
+/**
+ * Horizontal bars charts for the jquery Visualize plugin 2.0
+ *
+ * Data are represented by horizontal bars.
+ */
+(function define() {
+	$.visualize.plugins.bar = function () {
+
+		var o = this.options,
+			container = this.target.canvasContainer.addClass("visualize-bar"),
+			ctx = this.target.canvasContext,
+			canvas = this.target.canvas,
+			w = canvas.width(), h = canvas.height(),
+			tabledata = this.data,
+
+			data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
+			max = Math.ceil(Array.max($.map(data, Array.max))),
+			min = Math.floor(Array.min($.map(data, Array.min))),
+			range = max - ((min > 0) ? (min = 0) : min),
+
+			yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
+			xLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
+
+		// Display categories as X labels
+		var xBandWidth = w / xLabels.length;
+		var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
+			.width(w).height(h)
+			.insertBefore(canvas);
+
+		$.each(xLabels, function(i, label) {
+			var $label = $("<span>").addClass("label").html(label);
+			$("<li>")
+				.css('left', xBandWidth * i)
+				.width(xBandWidth)
+				.append($label)
+				.appendTo(xlabelsUL);
+		});
+
+		// Display data range as Y labels
+		var ylabelsUL = $("<ul>").addClass("visualize-labels-y")
+			.width(w).height(h)
+			.insertBefore(canvas);
+
+		ctx.beginPath();
+		ctx.lineWidth = 0.1;
+
+		var liHeight = h / (yLabels.length - 1);
+
+		$.each(yLabels, function(i, label) {
+			var $label = $("<span>").addClass("label").html(label);
+			$("<li>")
+				.css({"bottom": liHeight*i})
+				.append($label)
+				.appendTo(ylabelsUL);
+
+			// Slitghly reposition the label to center it on the median line
+			$label.css('margin-top', -0.5 * $label.height());
+
+			ctx.moveTo(0, liHeight * (i + 1));
+			ctx.lineTo(w, liHeight * (i + 1));
+		});
+
+		ctx.strokeStyle = o.bgcolors[0];
+		ctx.stroke();
+		ctx.closePath();
+
+		// iterate on the series and draw the bars
+		var yScale = h / range,
+			zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the X axis
+
+		for (var i = 0; i < data.length; i++) {
+			ctx.beginPath();
+			var linewidth = (xBandWidth - o.barGroupMargin*2) / data.length; // a single bar width (with margins)
+			ctx.lineWidth = linewidth - (o.barMargin * 2);
+			var serie = data[i];
+
+			for (var j = 0; j < serie.length; j++) {
+				var xPos = j*xBandWidth + o.barGroupMargin + i*linewidth + linewidth/2;
+				ctx.moveTo(xPos, zeroPos);
+				ctx.lineTo(xPos, Math.round(-serie[j] * yScale) + zeroPos);
+			}
+			ctx.strokeStyle = o.colors[i];
+			ctx.stroke();
+			ctx.closePath();
+		}
+	}
+})();
 /**
  * Radar charts for the jquery Visualize plugin 2.0
  *
@@ -922,10 +960,11 @@ $.visualize.plugins.radar = function () {
 			tabledata = this.data,
 
 			data = (o.parseDirection == 'x') ? tabledata.lines : tabledata.columns,
-			dataMax = $.map(data, Array.max),
-			dataRange = Array.max(dataMax),
+			max = Math.ceil(Array.max($.map(data, Array.max))),
+			min = Math.floor(Array.min($.map(data, Array.min))),
+			range = max - ((min > 0) ? (min = 0) : min),
 
-			xLabels = $.visualize.getRangeLabels(0, dataRange, 5),
+			xLabels = $.visualize.getRangeLabels(min, max, o.ticks),
 			yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
 		// Display data range as X labels
@@ -956,7 +995,7 @@ $.visualize.plugins.radar = function () {
 
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
@@ -984,13 +1023,14 @@ $.visualize.plugins.radar = function () {
 			ctx.lineTo(w, liHeight * (i + 1));
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
 		// iterate on the series and draw the bars
-		var xScale = w / dataRange;
-		var yBandHeight = h / (yLabels.length);
+		var xScale = w / range,
+			yBandHeight = h / (yLabels.length),
+			zeroPos = ((min < 0) ? -min : 0) * xScale; // Position of the 0 on the X axis
 
 		for (var i = 0; i < data.length; i++) {
 			ctx.beginPath();
@@ -1000,8 +1040,8 @@ $.visualize.plugins.radar = function () {
 
 			for (var j = 0; j < serie.length; j++) {
 				var yPos = j*yBandHeight + o.barGroupMargin + i*linewidth + linewidth/2;
-				ctx.moveTo(0, yPos);
-				ctx.lineTo(Math.round(serie[j] * xScale) + 0.1, yPos);
+				ctx.moveTo(zeroPos, yPos);
+				ctx.lineTo(Math.round(serie[j] * xScale) + zeroPos, yPos);
 			}
 			ctx.strokeStyle = o.colors[i];
 			ctx.stroke();
@@ -1081,7 +1121,7 @@ $.visualize.plugins.radar = function () {
 
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
@@ -1110,7 +1150,7 @@ $.visualize.plugins.radar = function () {
 			ctx.lineTo(w, h - liHeight * i);
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
