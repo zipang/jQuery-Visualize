@@ -7,14 +7,13 @@ $(function(){
 
 	$('table').visualize('radar', {width: '420px'});
 
-	$('table').visualize('pilebar_100', {width: '420px', height: '200px', yLabelInterval: 50});
-	$('table').visualize('pilebar', {width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('pilebar_100', {width: '420px', height: '200px'});
+	$('table').visualize('pilebar', {width: '420px', height: '200px'});
 
-	$('table').visualize('dots', {width: '420px', height: '200px', yLabelInterval: 50});
-	$('table').visualize('dots_w', {width: '420px', height: '200px', yLabelInterval: 50});
+	$('table').visualize('dots', {width: '420px', height: '200px'});
+	$('table').visualize('dots_w', {width: '420px', height: '200px'});
 
-	$('table').visualize('hbar', {width: '420px', height: '400px', yLabelInterval: 100});
+	$('table').visualize('hbar', {width: '420px', height: '400px', bgcolors: ["white"], ticks: 9});
 	$('table').visualize('hstack', {width: '420px', height: '200px'});
 	$('table').visualize('hstack_100', {width: '420px', height: '200px'});
-
 });
