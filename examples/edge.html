@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+	<title>Charting</title>
+	<link href="../css/basic.css" type="text/css" rel="stylesheet" />
+	<script type="text/javascript" src="../lib/enhance.js"></script>
+	<script type="text/javascript">
+		// Run capabilities test
+		enhance({
+			loadScripts: [
+				{src: 'examples/excanvas.js', iecondition: 'all'},
+				'../lib/jquery-1.4.4.min.js',
+				'../dist/jquery.visualize.pack.min.js',
+				'example.js'
+			],
+			loadStyles: [
+				'../css/visualize.css',
+				'../css/visualize-dark.css'
+			]
+		});
+	</script>
+</head>
+<body>
+
+<h1>Living on the edge</h1>
+<p>What does it mean ? We don't know.. Living on the edge is dangerous..</p>
+
+<table>
+	<Caption>One column</Caption>
+	<thead><tr>
+		<td></td>
+		<th scope="col">nb</th>
+	</tr></thead>
+	<tbody>
+	<tr>
+		<th scope="row">Langage</th>
+		<td >4</td>
+	</tr>
+	<tr>
+		<th scope="row">Fonction</th>
+		<td >1</td>
+	</tr>
+	</tbody>
+</table>
+
+<table>
+	<Caption>Twos column</Caption>
+	<thead><tr>
+		<td></td>
+		<th scope="col">nb</th>
+		<th scope="col">avg</th>
+	</tr></thead>
+	<tbody>
+	<tr>
+		<th scope="row">Langage</th>
+		<td >4</td>
+		<td >3</td>
+	</tr>
+	<tr>
+		<th scope="row">Fonction</th>
+		<td >-1</td>
+		<td >-0.2</td>
+	</tr>
+	</tbody>
+</table>
+
+</body>
+</html>
