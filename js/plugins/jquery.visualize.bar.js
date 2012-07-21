@@ -22,50 +22,14 @@
 			xLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
 		// Display categories as X labels
-		var xBandWidth = w / xLabels.length;
-		var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
-			.width(w).height(h)
-			.insertBefore(canvas);
-
-		$.each(xLabels, function(i, label) {
-			var $label = $("<span>").addClass("label").html(label);
-			$("<li>")
-				.css('left', xBandWidth * i)
-				.width(xBandWidth)
-				.append($label)
-				.appendTo(xlabelsUL);
-		});
+		this.drawXAxis(xLabels);
 
 		// Display data range as Y labels
-		var ylabelsUL = $("<ul>").addClass("visualize-labels-y")
-			.width(w).height(h)
-			.insertBefore(canvas);
-
-		ctx.beginPath();
-		ctx.lineWidth = 0.1;
-
-		var liHeight = h / (yLabels.length - 1);
-
-		$.each(yLabels, function(i, label) {
-			var $label = $("<span>").addClass("label").html(label);
-			$("<li>")
-				.css({"bottom": liHeight*i})
-				.append($label)
-				.appendTo(ylabelsUL);
-
-			// Slitghly reposition the label to center it on the median line
-			$label.css('margin-top', -0.5 * $label.height());
-
-			ctx.moveTo(0, liHeight * (i + 1));
-			ctx.lineTo(w, liHeight * (i + 1));
-		});
-
-		ctx.strokeStyle = o.bgcolors[0];
-		ctx.stroke();
-		ctx.closePath();
+		this.drawYAxis(yLabels);
 
 		// iterate on the series and draw the bars
-		var yScale = h / range,
+		var xBandWidth = w / xLabels.length,
+			yScale = h / range,
 			zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the X axis
 
 		for (var i = 0; i < data.length; i++) {

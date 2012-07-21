@@ -43,7 +43,6 @@
 		var domain = last - first,
 			ticks  = (ticks >= domain) ? (domain + 1) : ticks,
 		    slices = ticks - 1,
-
 		    val, labels = [];
 
 		labels.push(first);
@@ -72,13 +71,14 @@
 
 		} else if ($.visualize.plugins[type]) {
 			// Allready loaded chart plugin
-			$.visualize.plugins[type].apply(context);
+			$.visualize.plugins[type].apply(new DrawContext(context));
 
 		} else {
 			// Try to dynamically load a new type of chart from external plugin
 			$.getScript("./js/plugins/jquery.visualize." + type.split(/[-_]/)[0] + ".js",
 				function loaded() {
-					$.visualize.plugins[type].apply(context);
+					$.visualize.plugins[type].apply(new DrawContext(context));
+
 				}).fail(function (jqxhr, settings, exception) {
 					context.target.canvasContainer.remove();
 					if (console.log) console.log( "Failed to load jquery.vizualize plugin " + type
@@ -86,6 +86,141 @@
 						+ exception );
 				});
 		}
+	}
+
+	function defaultFormat(x) {
+		return x;
+	}
+
+	/**
+	 * All chart plugins will inherit of this context accessible with the 'this' keyword
+ 	 */
+	function DrawContext(ctx) {
+		$.extend(this, ctx); // copy the target, data and options attribute
+	}
+
+	/**
+	 * The DrawContext prototype provides some common utility methods to all graph plugins
+	 */
+	DrawContext.prototype = {
+
+		/**
+		 * Available options :
+		 * 	- centerLabels : use TRUE to center a categorie label in the middle of its region
+		 * 	                 use FALSE to align numbers on their ticks
+		 * 	- drawLines : TRUE of FALSE to draw the vertical line associated with the labels boundarie region
+		 * 	- format : an optional format function to format numbers or dates
+		 * @param xLabels the labels to write along the axis. numbers or texts
+		 * @param options. when not passed, the method will try to figure by itself wether to center the label and to draw lines
+		 */
+		drawXAxis: function(xLabels, options) {
+			var options = $.extend({}, options),
+				ctx = this.target.canvasContext,
+				canvas = this.target.canvas,
+				w = canvas.width(), h = canvas.height(),
+				centerLabels = (options.centerLabels !== undefined ? options.centerLabels : (isNaN(xLabels[0]))),
+				drawLines = (options.drawLines !== undefined ? options.drawLines : !centerLabels),
+				fmt = options.format || defaultFormat;
+
+			var xBandWidth = w / (xLabels.length - (centerLabels ? 0 : 1));
+			var xlabelsUL = $("<ul>").addClass("visualize-labels-x")
+				.width(w).height(h)
+				.insertBefore(canvas);
+
+			if (centerLabels) {
+				// Display centered labels
+				$.each(xLabels, function(i, label) {
+					var $label = $("<span>").addClass("label").html(fmt(label));
+
+					$("<li>").css('left', xBandWidth * i).width(xBandWidth)
+						.append($label).appendTo(xlabelsUL);
+				});
+
+			} else { // Align labels on ticks
+				$.each(xLabels, function(i, label) {
+					var $label = $("<span>").addClass("label").html(fmt(label));
+
+					$("<li>").css('left', xBandWidth * i).width(xBandWidth)
+						.append($label).appendTo(xlabelsUL);
+
+					if (i > 0) {
+						$label.css("margin-left", -0.5 * $label.width());
+					}
+				});
+			}
+
+			if (drawLines) {
+				ctx.beginPath();
+				ctx.lineWidth = 0.1;
+
+				$.each(xLabels, function(i, label) {
+					ctx.moveTo(xBandWidth * (i + 1), 0);
+					ctx.lineTo(xBandWidth * (i + 1), h);
+				});
+
+				ctx.strokeStyle = this.options.bgcolors[0];
+				ctx.stroke();
+				ctx.closePath();
+			}
+		},
+
+		/**
+		 * Same options as drawXAxis.
+		 * The Y labels are displayed from bottom to top.
+		 */
+		drawYAxis: function(yLabels, options) {
+			var options = $.extend({}, options),
+				ctx = this.target.canvasContext,
+				canvas = this.target.canvas,
+				w = canvas.width(), h = canvas.height(),
+				centerLabels = (options.centerLabels !== undefined ? options.centerLabels : (isNaN(yLabels[0]))),
+				drawLines = (options.drawLines !== undefined ? options.drawLines : !centerLabels),
+				fmt = options.format || defaultFormat;
+
+			var liHeight = h / (yLabels.length - (centerLabels ? 0 : 1));
+			var ylabelsUL = $("<ul>").addClass("visualize-labels-y")
+				.width(w).height(h)
+				.insertBefore(canvas);
+
+			if (centerLabels) { // Display categories as Y labels
+				$.each(yLabels, function(i, label) {
+					var $label = $("<span>").addClass("label").html(fmt(label));
+
+					$("<li>").css("bottom", liHeight * i + liHeight / 2)
+						.append($label).prependTo(ylabelsUL);
+
+					// Slitghly reposition the label to center it on the median line
+					$label.css('margin-top', -0.5 * $label.height());
+				});
+
+
+			} else { // Display data range as Y labels
+				$.each(yLabels, function(i, label) {
+					var $label = $("<span>").addClass("label").html(fmt(label));
+
+					$("<li>").css({"bottom": liHeight*i})
+						.append($label).appendTo(ylabelsUL);
+
+					// Slitghly reposition the label to center it on the median line
+					$label.css('margin-top', -0.5 * $label.height());
+				});
+			}
+
+			if (drawLines) {
+				ctx.beginPath();
+				ctx.lineWidth = 0.1;
+
+				$.each(yLabels, function(i, label) {
+					ctx.moveTo(0, liHeight * (i + 1));
+					ctx.lineTo(w, liHeight * (i + 1));
+				});
+
+				ctx.strokeStyle = this.options.bgcolors[0];
+				ctx.stroke();
+				ctx.closePath();
+			}
+		}
+
 	}
 
 	/* --------------------------------------------------------------------
@@ -509,28 +644,27 @@
 				options:o
 			});
 
+			//title/key container
+			if (o.appendTitle || o.appendKey) {
+				var $infoContainer = $("<div>").addClass("visualize-info").appendTo($canvasContainer);
 
-      //title/key container
-      if (o.appendTitle || o.appendKey) {
-        var $infoContainer = $("<div>").addClass("visualize-info").appendTo($canvasContainer);
+				//append title
+				if (o.appendTitle) {
+					$("<div>").addClass("visualize-title").html(title).appendTo($infoContainer);
+				}
 
-        //append title
-        if (o.appendTitle) {
-          $("<div>").addClass("visualize-title").html(title).appendTo($infoContainer);
-        }
-
-        //append color keys of the series
-        if (o.appendKey) {
-          var $keys = $("<ul>").addClass("visualize-key");
-          $.each(tableData.keys(), function(i, key) {
-            $("<li>")
-              .append($("<span>").addClass("visualize-key-color").css("background", o.colors[i]))
-              .append($("<span>").addClass("visualize-key-label").html(key))
-              .appendTo($keys)
-          });
-          $keys.appendTo($infoContainer);
-        }
-      }
+				//append color keys of the series
+				if (o.appendKey) {
+					var $keys = $("<ul>").addClass("visualize-key");
+					$.each(tableData.keys(), function (i, key) {
+						$("<li>")
+							.append($("<span>").addClass("visualize-key-color").css("background", o.colors[i]))
+							.append($("<span>").addClass("visualize-key-label").html(key))
+							.appendTo($keys)
+					});
+					$keys.appendTo($infoContainer);
+				}
+			}
 
 			//clean up some doubled lines that sit on top of canvas borders (done via JS due to IE)
 			$('.visualize-line li:first-child span.line, .visualize-line li:last-child span.line, .visualize-area li:first-child span.line, .visualize-area li:last-child span.line, .visualize-bar li:first-child span.line,.visualize-bar .visualize-labels-y li:last-child span.line').css('border', 'none');
