@@ -40,15 +40,21 @@
 	 * @return {Array}
 	 */
 	$.visualize.getRangeLabels = function (first, last, ticks) {
-		var ticks  = ticks || 5,
+		var domain = last - first,
+			ticks  = (ticks >= domain) ? (domain + 1) : ticks,
 		    slices = ticks - 1,
-		    domain = last - first,
-		    labels = [];
+
+		    val, labels = [];
 
 		labels.push(first);
 
 		for (var i = 1; i < slices; i++) {
-			labels.push(Math.ceil(first + domain/slices*i));
+			val = first + domain / slices * i;
+			if (Math.abs(val) < 10) {
+				labels.push((val % 1 == 0) ? val : Math.ceil(val * 100) / 100); // display 2 digits when precision needed
+			} else {
+				labels.push(Math.floor(val));
+			}
 		}
 
 		labels.push(last);
@@ -98,8 +104,8 @@
 			if (this.parsed) return this;
 
 			var rowFilter = this.options.rowFilter,
-				colFilter = this.options.colFilter,
-				lines = [], lineHeaders = [], columnHeaders = [];
+			    colFilter = this.options.colFilter,
+			    lines = [], lineHeaders = [], columnHeaders = [];
 
 			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
 				var cells = [];
@@ -116,8 +122,8 @@
 			});
 
 			var lcount = lines.length,
-					ccount = lines[0].length,
-					columns = [];
+			    ccount = lines[0].length,
+			    columns = [];
 			for (var j = 0; j < ccount; j++) {
 				var columnValues = [];
 				for (var i = 0; i < lcount; i++) {
@@ -256,8 +262,7 @@
 		},
 
 		yLabels:function (start, end) {
-			var numLabels = this.options.ticks || Math.round(this.options.height / this.options.yLabelInterval);
-			return $.visualize.getRangeLabels(start, end, numLabels);
+			return $.visualize.getRangeLabels(start, end, this.options.ticks);
 		},
 
 		yLabels100:function () {
@@ -292,6 +297,7 @@
 				rowFilter:' ',
 				colFilter:' ',
 				colors:['#be1e2d', '#666699', '#92d5ea', '#ee8310', '#8d10ee', '#5a3b16', '#26a4ed', '#f45a90', '#e9e744'],
+				bgcolors:["#777", "#aaa", "#eee"],
 				textColors:[], //corresponds with colors array. null/undefined items will fall back to CSS
 				parseDirection:'x', //which direction to parse the table data
 
@@ -302,12 +308,15 @@
 				lineWeight:4, //for line and area - stroke weight
 				barGroupMargin:10,
 				barMargin:1, //space around bars in bar chart (added to both sides of bar)
+
 				yLabelInterval:30 //distance between y labels
 			}, options);
 
 			//reset width, height to numbers
 			var w = o.width  = parseFloat(o.width);
 			var h = o.height = parseFloat(o.height);
+
+			o.ticks = +o.ticks || Math.ceil(h / o.yLabelInterval);
 
 			// Build-in Chart functions
 			var charts = {
@@ -448,65 +457,7 @@
 				},
 
 				area:function () {
-          charts.line(true);
-				},
-
-				bar:function () {
-					$canvasContainer.addClass('visualize-bar');
-
-					//write X labels
-					var xInterval = w / (xLabels.length);
-					var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
-						.width(w).height(h)
-						.insertBefore($canvas);
-
-					$.each(xLabels, function (i) {
-						var thisLi = $('<li><span class="label">' + this + '</span></li>')
-							.prepend('<span class="line" />')
-							.css('left', xInterval * i)
-							.width(xInterval)
-							.appendTo(xlabelsUL);
-					});
-
-					// write Y labels
-					var yScale = h / totalYRange;
-					var liBottom = h / (yLabels.length - 1);
-					var ylabelsUL = $('<ul class="visualize-labels-y"></ul>')
-						.width(w).height(h)
-						.insertBefore($canvas);
-
-					$.each(yLabels, function (i, label) {
-						var $label = $("<span>").addClass("label").html(label);
-						var thisLi = $("<li>")
-							.css('bottom', liBottom * i)
-							.prepend('<span class="line" />')
-                            .append($label)
-							.prependTo(ylabelsUL);
-
-                        $label.css('margin-top', $label.height() / -2);
-					});
-
-					//start from the bottom left
-					ctx.translate(0, zeroLoc);
-					//iterate and draw
-					$.each(dataGroups, function (i, group) {
-						ctx.beginPath();
-						var serieWidth = (xInterval - o.barGroupMargin * 2) / dataGroups.length;
-						ctx.lineWidth = serieWidth - (o.barMargin * 2);
-
-						$.each(group.points, function(j, val) {
-							var xVal = ((j * xInterval) - o.barGroupMargin) + (i * serieWidth) + serieWidth / 2;
-							xVal += o.barGroupMargin * 2;
-							var yVal = Math.round(-val * yScale);
-							if (yVal) {
-								ctx.moveTo(xVal, 0);
-								ctx.lineTo(xVal, yVal);
-							}
-						});
-						ctx.strokeStyle = group.color;
-						ctx.stroke();
-						ctx.closePath();
-					});
+          			charts.line(true);
 				}
 			};
 
