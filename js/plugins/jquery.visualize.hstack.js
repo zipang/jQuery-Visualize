@@ -70,7 +70,7 @@
 
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
@@ -99,7 +99,7 @@
 			ctx.lineTo(w, h - liHeight * i);
 		});
 
-		ctx.strokeStyle = "#fff";
+		ctx.strokeStyle = o.bgcolors[0];
 		ctx.stroke();
 		ctx.closePath();
 
