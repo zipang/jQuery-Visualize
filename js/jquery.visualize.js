@@ -130,7 +130,8 @@
 			if (centerLabels) {
 				// Display centered labels
 				$.each(xLabels, function(i, label) {
-					var $label = $("<span>").addClass("label").html(fmt(label));
+					var $label = $("<span>").addClass("label")
+						.css({width: "100%", textAlign: "center"}).html(fmt(label));
 
 					$("<li>").css('left', xBandWidth * i).width(xBandWidth)
 						.append($label).appendTo(xlabelsUL);
@@ -182,29 +183,15 @@
 				.width(w).height(h)
 				.insertBefore(canvas);
 
-			if (centerLabels) { // Display categories as Y labels
-				$.each(yLabels, function(i, label) {
-					var $label = $("<span>").addClass("label").html(fmt(label));
+			$.each(yLabels, function(i, label) {
+				var $label = $("<span>").addClass("label").html(fmt(label));
 
-					$("<li>").css("bottom", liHeight * i + liHeight / 2)
-						.append($label).prependTo(ylabelsUL);
+				$("<li>").css("bottom", liHeight*i + (centerLabels ? liHeight/2 : 0))
+					.append($label).prependTo(ylabelsUL);
 
-					// Slitghly reposition the label to center it on the median line
-					$label.css('margin-top', -0.5 * $label.height());
-				});
-
-
-			} else { // Display data range as Y labels
-				$.each(yLabels, function(i, label) {
-					var $label = $("<span>").addClass("label").html(fmt(label));
-
-					$("<li>").css({"bottom": liHeight*i})
-						.append($label).appendTo(ylabelsUL);
-
-					// Slitghly reposition the label to center it on the median line
-					$label.css('margin-top', -0.5 * $label.height());
-				});
-			}
+				// Slitghly reposition the label to center it on the median line
+				$label.css('margin-top', -0.5 * $label.height());
+			});
 
 			if (drawLines) {
 				ctx.beginPath();
