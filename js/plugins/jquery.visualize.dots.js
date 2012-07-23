@@ -23,7 +23,6 @@
     function drawDots(weighted) {
 
         var o = this.options,
-            container = this.target.canvasContainer,
             ctx = this.target.canvasContext,
             canvas = this.target.canvas,
             w = canvas.width(), h = canvas.height(),
@@ -33,8 +32,6 @@
             bottomValue = (this.data.bottomValue() > 0) ? 0 : this.data.bottomValue(),
             totalYRange =  topValue - bottomValue,
             yLabels = this.data.yLabels(bottomValue, topValue);
-
-        container.addClass('visualize-dots');
 
         // Display X labels
         var xInterval = w / (xLabels.length - 1);

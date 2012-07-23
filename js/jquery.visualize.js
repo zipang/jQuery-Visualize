@@ -246,6 +246,7 @@
 			var lcount = lines.length,
 			    ccount = lines[0].length,
 			    columns = [];
+
 			for (var j = 0; j < ccount; j++) {
 				var columnValues = [];
 				for (var i = 0; i < lcount; i++) {
@@ -590,7 +591,7 @@
 
 			//create canvas wrapper div, set inline w&h, append
 			var $canvasContainer = (container || $("<div>"))
-				.addClass("visualize")
+				.addClass("visualize").addClass("visualize-" + o.type)
 				.attr("role", "img").attr("aria-label", "Chart representing data from the table: " + title)
 				.height(h).width(w)
 				.append($canvas);

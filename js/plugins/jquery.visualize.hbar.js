@@ -7,7 +7,6 @@
 	$.visualize.plugins.hbar = function () {
 
 		var o = this.options,
-			container = this.target.canvasContainer.addClass("visualize-hbar"),
 			ctx = this.target.canvasContext,
 			canvas = this.target.canvas,
 			w = canvas.width(), h = canvas.height(),

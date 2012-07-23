@@ -7,7 +7,6 @@
 	$.visualize.plugins.bar = function () {
 
 		var o = this.options,
-			container = this.target.canvasContainer.addClass("visualize-bar"),
 			ctx = this.target.canvasContext,
 			canvas = this.target.canvas,
 			w = canvas.width(), h = canvas.height(),
