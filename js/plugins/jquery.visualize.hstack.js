@@ -28,7 +28,7 @@
 
 	var hstack = $.visualize.plugins.hstack = function () {
 
-		var o = $.extend(defaults, this.options),
+		var o = $.extend({}, defaults, this.options),
 			container = this.target.canvasContainer.addClass("visualize-hstack"),
 			ctx = this.target.canvasContext,
 			canvas = this.target.canvas,
