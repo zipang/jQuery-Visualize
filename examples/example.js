@@ -5,10 +5,12 @@ $(function(){
 	$('table').visualize('area', {width: '420px'});
 	$('table').visualize('line', {width: '420px'});
 
-	$('table').visualize('radar', {width: '420px'});
+	/* $('table').visualize('radar', {width: '420px'}); */
 
-	$('table').visualize('pilebar_100', {width: '420px', height: '200px'});
-	$('table').visualize('pilebar', {width: '420px', height: '200px'});
+	$('table').visualize('stack_100', {parseDirection: 'y', width: '420px', height: '200px'});
+	$('table').visualize('stack', {parseDirection: 'y', width: '420px', height: '200px'});
+	$('table').visualize('stack_100', {width: '420px', height: '200px'});
+	$('table').visualize('stack', {width: '420px', height: '200px'});
 
 	$('table').visualize('dots', {width: '420px', height: '200px'});
 	$('table').visualize('dots_w', {width: '420px', height: '200px'});

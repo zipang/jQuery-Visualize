@@ -33,6 +33,9 @@
             totalYRange =  topValue - bottomValue,
             yLabels = this.data.yLabels(bottomValue, topValue);
 
+		// legend keys
+		this._keys = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
+
         // Display X labels
         var xInterval = w / (xLabels.length - 1);
         var xlabelsUL = $('<ul class="visualize-labels-x"></ul>')
