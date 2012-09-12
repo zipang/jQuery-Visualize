@@ -1,3 +1,4 @@
+
 # Mac OS X ignore
 .DS_Store
 ._*
@@ -5,7 +6,12 @@
 .idea/
 # local experimentations
 lab/
-# local versions of libraries
-lib/
 # EditPlus backups
 *.*~
+# Planning related files
+NOTES D'INTEGRATION.*
+js/plugins/visualize-planning/
+examples/example-planning.js
+lib/jquery*.*
+
+.gitignore

@@ -4,7 +4,7 @@
  * Data are represented by horizontal bars.
  */
 (function define() {
-	$.visualize.plugins.hbar = function () {
+	var hbar = $.visualize.plugins.hbar = function () {
 
 		var o = this.options,
 			ctx = this.target.canvasContext,
@@ -20,6 +20,8 @@
 			xLabels = $.visualize.getRangeLabels(min, max, o.ticks),
 			yLabels = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
 
+		this._keys = (o.parseDirection == 'x') ? tabledata.lineHeaders : tabledata.columnHeaders;
+
 		// Display data range as X labels
 		this.drawXAxis(xLabels);
 
@@ -27,8 +29,8 @@
 		this.drawYAxis(yLabels, {drawLines: true});
 
 		// iterate on the series and draw the bars
-		var xScale = w / range,
-			yBandHeight = h / (yLabels.length),
+		var xScale = (range != 0) ? w / range : w,
+			yBandHeight = (yLabels.length != 0) ? h / yLabels.length : h,
 			zeroPos = ((min < 0) ? -min : 0) * xScale; // Position of the 0 on the X axis
 
 		for (var i = 0; i < data.length; i++) {

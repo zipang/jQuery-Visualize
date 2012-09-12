@@ -17,9 +17,7 @@
 .visualize-toolbar input { font-size: 1.1em; margin-left: 1em; }
 .visualize-toolbar input[type=date] { text-align: center; }
 .visualize-toolbar .btn-group { display: inline;}
-.btn { font-style: normal; }
-.btn.prev:after { content: "\00AB"; }
-.btn.next:after { content: "\00BB"; }
+.btn { font-style: normal; padding: 0 0.5em; }
 
 /*pie labels*/
 .visualize-pie .visualize-labels { list-style: none; }
