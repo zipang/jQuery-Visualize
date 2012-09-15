@@ -11,7 +11,7 @@
 .visualize ul.visualize-key .visualize-key-color { width: 6px; height: 6px; left: 0; position: absolute; top: 50%; margin-top: -3px;  }
 .visualize label, .visualize-key-label { color: #333; }
 
-/*Toolbar and inout elements*/
+/*Toolbar*/
 .visualize .visualize-toolbar { position: absolute; top: -0.5em; right: 2em; font-size: 1em; font-weight: bold; }
 .visualize-toolbar label { white-space: nowrap; margin-left: 2em; }
 .visualize-toolbar input { font-size: 1.1em; margin-left: 1em; }

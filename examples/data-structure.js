@@ -1,11 +1,4 @@
 /**
- * Created by JetBrains WebStorm.
- * User: christophe
- * Date: 07/05/12
- * Time: 16:21
- */
-
-/**
  * Let's consider the following table structure
  *                  John        Mary         Peter
  * Food                  0         420           15

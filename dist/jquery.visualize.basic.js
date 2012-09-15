@@ -37,48 +37,6 @@
 		return (len ? Array.sum(arr) / len : 0);
 	};
 
-	// unit of times durations (in ms)
-	var ONE_HOUR = 1000*3600,
-		ONE_DAY  = ONE_HOUR*24,
-		ONE_WEEK = ONE_DAY*7,
-		durations = {
-			h: ONE_HOUR, hours: ONE_HOUR,
-			d: ONE_DAY,  days:  ONE_DAY,
-			w: ONE_WEEK, weeks: ONE_WEEK
-		};
-
-	/**
-	 * Define if needed Adds n units of time to date d
-	 * @param d:{Date}
-	 * @param n:{Number} (can be negative)
-	 * @param unit:{String}
-	 * @return {Date}
-	 */
-	Date.add = Date.add || function(d, n, unit) {
-		var unitCode = unit.charAt(0);
-		if (unitCode == "d") {
-			return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-		} else if (unitCode == "m") {
-			return new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
-		} else if (unitCode == "y") {
-			return new Date(d.getFullYear() + n, d.getMonth(), d.getDate());
-		}
-	};
-
-	/**
-	 * Get the difference (duration) between two dates/times in one of the following units :
-	 * 'h|hours', 'd|days', 'w|weeks', 'm|months', 'y|years'
-	 */
-	Date.elapsed = Date.elapsed  || function(unit, d1, d2) {
-		if (durations[unit]) { // units with constant durations are easy to calculate diff
-			return (d2-d1)/durations[unit];
-		} else if ((unit == "m") || (unit == "months")) {
-			return (d1.getFullYear()+d1.getMonth()*12 - d2.getFullYear()+d2.getMonth()*12)/12;
-		} else if ((unit == "y") || (unit == "years")) {
-			return (d1.getFullYear() - d2.getFullYear());
-		}
-	};
-
 	/**
 	 * Get a regular serie of numbers from
 	 * @param first to
@@ -164,15 +122,18 @@
 
 		/**
 		 * Draw a serie of date along the X axis
+		 * (Depends on lib/CalendarTools.js)
 		 */
 		drawDateRange: function(dateStart, dateEnd, options) {
+			if (typeof(Date.add) != "function") throw "This method is dependant on CalendarTools";
+
 			var ctx = this.target.canvasContext,
 				canvas = this.target.canvas,
 				w = canvas.width(), h = canvas.height(),
 				i = 0, nextDate = dateStart,
 				monthName = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jui", "Aou", "Sep", "Oct", "Nov", "Dec"];
 
-			var bands = Date.elapsed("days", dateStart, dateEnd) + 1, // (dateEnd - dateStart) / ONE_DAY) + 1, // number of bands
+			var bands = Date.elapsed("days", dateStart, dateEnd) + 1,
 				dayBandWidth = (bands == 0) ? w : w / bands;
 
 			// prepare helper functions
@@ -409,8 +370,8 @@
 		appendTitle:true, //table caption text is added to chart
 		title:null, //grabs from table caption if null
 		appendKey:true, //color key is added to chart
-		rowFilter:' ',
-		colFilter:' ',
+		rowFilter:'*',
+		colFilter:'*',
 		colors:['#be1e2d', '#666699', '#92d5ea', '#ee8310', '#8d10ee', '#5a3b16', '#26a4ed', '#f45a90', '#e9e744'],
 		lineColors:["#777", "#aaa", "#eee"],
 		textColors:[], //corresponds with colors array. null/undefined items will fall back to CSS
