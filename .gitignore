@@ -6,6 +6,7 @@
 .idea/
 # local experimentations
 lab/
+js/plugins/lab/
 # EditPlus backups
 *.*~
 # Planning related files
