@@ -1,13 +1,13 @@
 jQuery Visualize Plugin (_Extended_)
 ==================================
 
-This repository contains a partial rewriting of the Visualize jQuery plugin code that was released by Filament Group, Inc. as part of their book [Designing with Progressive Enhancement](http://filamentgroup.com/dwpe).
+This repository contains a *complete* rewriting of the Visualize jQuery plugin code that was released by Filament Group, Inc. as part of their book [Designing with Progressive Enhancement](http://filamentgroup.com/dwpe).
 
 The original version is still developped and maintained by Filament [here](https://github.com/filamentgroup/jQuery-Visualize)
 
 This first new version, while still a work in progress adds the following features to the original :
 - add a plugin mechanism to extend the library with new charts.
-- 3 new charts to include individually : piled bars, radar and dots.
+- several new chart
 
 ##Plugin Development
 
@@ -26,8 +26,7 @@ $.visualize.plugins.flashy = function () {
     var o = this.options,
         container = this.target.canvasContainer,
         ctx = this.target.canvasContext,
-        canvas = this.target.canvas,
-        topValue = this.data.topValue();
+        canvas = this.target.canvas;
 
     /* ... */
 }
