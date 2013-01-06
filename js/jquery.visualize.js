@@ -37,6 +37,14 @@
 		return (len ? Array.sum(arr) / len : 0);
 	};
 
+	$.debounce = function(fn, delay) {
+		var delay = delay || 250;
+		return function() {
+			clearTimeout(fn.hnd);
+			fn.hnd = setTimeout(fn, delay);
+		};
+	};
+
 	/**
 	 * Get a regular serie of numbers from
 	 * @param first to
@@ -311,9 +319,12 @@
 	 * Table scrapper object
 	 * -------------------------------------------------------------------- */
 	function TableData(table, options) {
-		this.table = $(table);
+		this.$table = $(table);
 		this.options = options;
-		// private
+
+		if (table.dataTableExt !== undefined) {
+			this.dataTable = this.$table.dataTable();
+		}
 		this.parse();
 	}
 
@@ -323,9 +334,13 @@
 			var rowFilter = this.options.rowFilter,
 			    colFilter = this.options.colFilter,
 			    lines = [], lineHeaders = [], columnHeaders = [],
-				cellParser = this.options.parser || parseFloat;
+				cellParser = this.options.parser || parseFloat,
+				$table = this.$table,
+				rows = this.dataTable ? 
+						$("thead tr", $table).add(this.dataTable.$("tr", {"filter":"applied"})) : 
+						$("tr", $table);
 
-			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
+			rows.filter(rowFilter).each(function (i, tr) {
 				var cells = [];
 				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
 					cells.push((i == 0) || (j == 0)? $(td).text() : cellParser($(td).text()));
@@ -434,7 +449,8 @@
 
 					//append new canvas to page
 					if (!container) {
-						$canvasContainer.insertAfter($table);
+						var $tableWrapper = $table.parent();
+						$canvasContainer.insertAfter($tableWrapper.hasClass("dataTables_wrapper") ? $tableWrapper : $table);
 					}
 
 					// excanvas initialization (IE only) see http://pipwerks.com/2009/03/12/lazy-loading-excanvasjs/
@@ -480,12 +496,17 @@
 						}
 					}
 
-					if (!container) {
-						//add event for updating
-						$canvasContainer.bind('visualizeRefresh', function () {
-							$table.visualize(o, $(this).empty());
-						});
-					}
+					// Event listeners
+					var refresh = function () {
+						$table.visualize(type, o, $canvasContainer.empty());
+						console.log("refreshed");
+					};
+					if (!container) $canvasContainer.on("refresh", $.debounce(refresh));
+					$table.parent().on("filter", function(evt) {
+						console.log("filter");
+						$canvasContainer.trigger("refresh");
+					});
+
 				}); // $tables.each()
 			}
 		);
