@@ -32,6 +32,7 @@
 			.insertAfter($canvas);
 
 		$.each(seriesTotal, function (i, total) {
+
 			// Draw the pie pieces
 			var slice = (total <= 0 || isNaN(total)) ? 0 : total / grandTotal;
 			if (slice > 0) {
@@ -43,7 +44,7 @@
 					false);
 				ctx.lineTo(centerX, centerY);
 				ctx.closePath();
-				ctx.fillStyle = o.colors[i];
+				ctx.fillStyle = o.colors[i % o.colors.length];
 				ctx.fill();
 			}
 
@@ -64,7 +65,7 @@
 					.append($label).appendTo(labels)
 					.css({left:labelX, top:labelY});
 				$label
-					.css('font-size', radius / 10)
+					.css('font-size', Math.min(radius / 10, 20))
 					.css('margin-' + leftRight, -$label.width() / 2)
 					.css('margin-' + topBottom, -$label.outerHeight() / 2);
 
