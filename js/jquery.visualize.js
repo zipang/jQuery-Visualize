@@ -488,7 +488,7 @@
 							var $keys = $("<ul>").addClass("visualize-key");
 							$.each(drawContext.keys(), function (i, key) {
 								$("<li>")
-									.append($("<span>").addClass("visualize-key-color").css("background", o.colors[i]))
+									.append($("<span>").addClass("visualize-key-color").css("background", o.colors[i % o.colors.length]))
 									.append($("<span>").addClass("visualize-key-label").html(key))
 									.appendTo($keys)
 							});
