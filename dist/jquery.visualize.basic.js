@@ -37,6 +37,14 @@
 		return (len ? Array.sum(arr) / len : 0);
 	};
 
+	$.debounce = function(fn, delay) {
+		var delay = delay || 250;
+		return function() {
+			clearTimeout(fn.hnd);
+			fn.hnd = setTimeout(fn, delay);
+		};
+	};
+
 	/**
 	 * Get a regular serie of numbers from
 	 * @param first to
@@ -311,9 +319,12 @@
 	 * Table scrapper object
 	 * -------------------------------------------------------------------- */
 	function TableData(table, options) {
-		this.table = $(table);
+		this.$table = $(table);
 		this.options = options;
-		// private
+
+		if (table.dataTableExt !== undefined) {
+			this.dataTable = this.$table.dataTable();
+		}
 		this.parse();
 	}
 
@@ -323,9 +334,13 @@
 			var rowFilter = this.options.rowFilter,
 			    colFilter = this.options.colFilter,
 			    lines = [], lineHeaders = [], columnHeaders = [],
-				cellParser = this.options.parser || parseFloat;
+				cellParser = this.options.parser || parseFloat,
+				$table = this.$table,
+				rows = this.dataTable ? 
+						$("thead tr", $table).add(this.dataTable.$("tr", {"filter":"applied"})) : 
+						$("tr", $table);
 
-			$("tr", this.table).filter(rowFilter).each(function (i, tr) {
+			rows.filter(rowFilter).each(function (i, tr) {
 				var cells = [];
 				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
 					cells.push((i == 0) || (j == 0)? $(td).text() : cellParser($(td).text()));
@@ -434,7 +449,8 @@
 
 					//append new canvas to page
 					if (!container) {
-						$canvasContainer.insertAfter($table);
+						var $tableWrapper = $table.parent();
+						$canvasContainer.insertAfter($tableWrapper.hasClass("dataTables_wrapper") ? $tableWrapper : $table);
 					}
 
 					// excanvas initialization (IE only) see http://pipwerks.com/2009/03/12/lazy-loading-excanvasjs/
@@ -472,7 +488,7 @@
 							var $keys = $("<ul>").addClass("visualize-key");
 							$.each(drawContext.keys(), function (i, key) {
 								$("<li>")
-									.append($("<span>").addClass("visualize-key-color").css("background", o.colors[i]))
+									.append($("<span>").addClass("visualize-key-color").css("background", o.colors[i % o.colors.length]))
 									.append($("<span>").addClass("visualize-key-label").html(key))
 									.appendTo($keys)
 							});
@@ -480,12 +496,17 @@
 						}
 					}
 
-					if (!container) {
-						//add event for updating
-						$canvasContainer.bind('visualizeRefresh', function () {
-							$table.visualize(o, $(this).empty());
-						});
-					}
+					// Event listeners
+					var refresh = function () {
+						$table.visualize(type, o, $canvasContainer.empty());
+						console.log("refreshed");
+					};
+					if (!container) $canvasContainer.on("refresh", $.debounce(refresh));
+					$table.parent().on("filter", function(evt) {
+						console.log("filter");
+						$canvasContainer.trigger("refresh");
+					});
+
 				}); // $tables.each()
 			}
 		);
@@ -582,6 +603,7 @@
 			.insertAfter($canvas);
 
 		$.each(seriesTotal, function (i, total) {
+
 			// Draw the pie pieces
 			var slice = (total <= 0 || isNaN(total)) ? 0 : total / grandTotal;
 			if (slice > 0) {
@@ -593,7 +615,7 @@
 					false);
 				ctx.lineTo(centerX, centerY);
 				ctx.closePath();
-				ctx.fillStyle = o.colors[i];
+				ctx.fillStyle = o.colors[i % o.colors.length];
 				ctx.fill();
 			}
 
@@ -614,7 +636,7 @@
 					.append($label).appendTo(labels)
 					.css({left:labelX, top:labelY});
 				$label
-					.css('font-size', radius / 10)
+					.css('font-size', Math.min(radius / 10, 20))
 					.css('margin-' + leftRight, -$label.width() / 2)
 					.css('margin-' + topBottom, -$label.outerHeight() / 2);
 
