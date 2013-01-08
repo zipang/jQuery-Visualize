@@ -334,23 +334,31 @@
 			var rowFilter = this.options.rowFilter,
 			    colFilter = this.options.colFilter,
 			    lines = [], lineHeaders = [], columnHeaders = [],
-				cellParser = this.options.parser || parseFloat,
+				cellParser = this.options.parser || function(x) {
+					return isNaN(x) ? x : parseFloat(x);
+				},
 				$table = this.$table,
 				rows = this.dataTable ? 
 						$("thead tr", $table).add(this.dataTable.$("tr", {"filter":"applied"})) : 
 						$("tr", $table);
 
 			rows.filter(rowFilter).each(function (i, tr) {
-				var cells = [];
-				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
-					cells.push((i == 0) || (j == 0)? $(td).text() : cellParser($(td).text()));
+				var headers = [], cells = [];
+				$("th", $(tr)).filter(colFilter).each(function (j, th) {
+					headers.push($(th).text());
+				});
+				$("td", $(tr)).filter(colFilter).each(function (j, td) {
+					cells.push(cellParser($(td).text()));
 				});
 				if (i == 0) {
-					cells.shift();
-					columnHeaders = cells;
+					columnHeaders = headers;
 				} else {
-					lineHeaders.push(cells.shift());
+					lineHeaders.push(headers[0]);
 					lines.push(cells);
+				}
+				if (lineHeaders.length > 0) { // wheck that the column headers have the same length as the lines data
+					var firstDataLine = lines[0];
+					if (columnHeaders.length > firstDataLine.length) columnHeaders.shift();
 				}
 			});
 
@@ -370,6 +378,17 @@
 			this.columnHeaders = columnHeaders;
 			this.lines = lines;
 			this.columns = columns;
+		},
+
+		/**
+		 * Retrieve a line or column from its name
+		 * @param collection : [columns|lines]
+		 * @param name : name of column or line to retrieve
+		 */
+		get: function(collection, name) {
+			var i = 0, lname = name.toLowerCase(), headers = this[(collection.toLowerCase() == "columns") ? "columnHeaders" : "lineHeaders"];
+			while (headers[i] && headers[i].toLowerCase() != lname) i++;
+			return (i < headers.length) ? this[collection][i] : [];
 		}
 	}; // TableData prototype
 
@@ -392,10 +411,6 @@
 		textColors:[], //corresponds with colors array. null/undefined items will fall back to CSS
 		parseDirection:'x', //which direction to parse the table data
 
-		pieMargin:20, //pie charts only - spacing around pie
-		pieLabelsAsPercent:true,
-		pieLabelPos:'inside',
-
 		lineWeight:4, //for line and area - stroke weight
 		barGroupMargin:10,
 		barMargin:1, //space around bars in bar chart (added to both sides of bar)
@@ -412,7 +427,7 @@
 			type = options.type || defaults.type;
 		}
 
-		var $tables = $(this); // we may have more  than one table in the selection
+		var $tables = $(this); // we may have more than one table in the selection
 
 		loadChart( // loading may be asynchrone
 			type,
@@ -439,6 +454,7 @@
 					var $canvas = $("<canvas>").attr("height", h).attr("width", w);
 					//get title for chart
 					var title = o.title || $table.find('caption').text();
+					if (o.column) title += (" (" + o.column + ")");
 
 					//create canvas wrapper div, set inline w&h, append
 					var $canvasContainer = (container || $("<div>"))
@@ -496,23 +512,31 @@
 						}
 					}
 
-					// Event listeners
-					var refresh = function () {
-						$table.visualize(type, o, $canvasContainer.empty());
-						console.log("refreshed");
-					};
-					if (!container) $canvasContainer.on("refresh", $.debounce(refresh));
-					$table.parent().on("filter", function(evt) {
-						console.log("filter");
-						$canvasContainer.trigger("refresh");
-					});
+					if (!$table.data("visualize-bound")) {
+						// Attach the filter and sort events listeners
+						$table
+							.on("filter", function(evt, settings) {
+								$canvasContainer.trigger("refresh");
+							})
+							.on("sort", function(evt, settings) {
+								var columnIndex = settings.aaSorting[0][0];
+								o.column = $($("thead tr > *", $table)[columnIndex]).text(); // store the column name
+							})
+							.data("visualize-bound", true);
+
+						// Refresh chart on custom refresh event (debounced)
+						var refresh = $.debounce(function () {
+							$table.visualize(type, o, $canvasContainer.empty());
+						});
+						$canvasContainer.on("refresh", refresh);
+	
+					} // events bound
 
 				}); // $tables.each()
 			}
 		);
 
-		return $tables; // Allow usual jQuery chainability on selector function
-
+		return $tables; // Allows for usual jQuery chainability
 	};
 
 })(jQuery);
