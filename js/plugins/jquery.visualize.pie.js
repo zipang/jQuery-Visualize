@@ -7,7 +7,7 @@
 
 	var defaults = {
 		pieMargin:20, //pie charts only - spacing around pie
-		pieLabelsAsPercent:false,
+		pieLabelsAsPercent:true,
 		pieLabelPos:'inside',		
 	};
 	
