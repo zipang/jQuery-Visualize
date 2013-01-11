@@ -40,8 +40,11 @@
 	$.debounce = function(fn, delay) {
 		var delay = delay || 250;
 		return function() {
+			var ctx = this, args = arguments;
 			clearTimeout(fn.hnd);
-			fn.hnd = setTimeout(fn, delay);
+			fn.hnd = setTimeout(function() {
+				fn.apply(ctx, args);
+			}, delay);
 		};
 	};
 
@@ -326,6 +329,7 @@
 			this.dataTable = this.$table.dataTable();
 		}
 		this.parse();
+		this.$table.data("visualize-data", this);
 	}
 
 	TableData.prototype = {
@@ -339,7 +343,7 @@
 				},
 				$table = this.$table,
 				rows = this.dataTable ? 
-						$("thead tr", $table).add(this.dataTable.$("tr", {"filter":"applied"})) : 
+						$("thead tr", $table).not(".filters").add(this.dataTable.$("tr", {"filter":"applied"})) : 
 						$("tr", $table);
 
 			rows.filter(rowFilter).each(function (i, tr) {
@@ -353,7 +357,7 @@
 				if (i == 0) {
 					columnHeaders = headers;
 				} else {
-					lineHeaders.push(headers[0]);
+					lineHeaders.push(headers[0] || cells[0]);
 					lines.push(cells);
 				}
 				if (lineHeaders.length > 0) { // wheck that the column headers have the same length as the lines data
@@ -387,7 +391,7 @@
 		 */
 		get: function(collection, name) {
 			var i = 0, lname = name.toLowerCase(), headers = this[(collection.toLowerCase() == "columns") ? "columnHeaders" : "lineHeaders"];
-			while (headers[i] && headers[i].toLowerCase() != lname) i++;
+			while (headers[i] !== undefined && headers[i].toLowerCase() != lname) i++;
 			return (i < headers.length) ? this[collection][i] : [];
 		}
 	}; // TableData prototype
