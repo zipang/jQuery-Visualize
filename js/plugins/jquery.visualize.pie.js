@@ -6,17 +6,21 @@
 (function define() {
 
 	var defaults = {
+		width: 250, height: 250, 
 		pieMargin:20, //pie charts only - spacing around pie
 		pieLabelsAsPercent:true,
 		pieLabelPos:'inside',		
 	};
+
+	var FULL_PIE  = Math.PI * 2, // 2*PI
+		QUART = Math.PI * 0.5;   // PI/2
 	
 	$.visualize.plugins.pie = function () {
 
 		var o = this.options,
 			ctx = this.target.canvasContext,
 			$canvas = this.target.canvas,
-			w = $canvas.width(), h = $canvas.height(),
+			w = $canvas.width() || defaults.width, h = $canvas.height() || defaults.height,
 			tabledata = this.data;
 
 		// Let's gather the pie data
@@ -60,20 +64,19 @@
 
 		var centerX = Math.round(w / 2),
 			centerY = Math.round(h / 2),
-			radius = centerY - o.pieMargin,
-			counter = 0.0;
+			radius  = centerY - o.pieMargin,
+			filling = 0.0; // 0..1
 
 		$.each(slices, function (i, val) {
 
 			// Draw the pie pieces
-			var slice = (val <= 0 || isNaN(val)) ? 0 : val / total;
+			var slice = (val <= 0 || isNaN(val)) ? 0 : val / total,
+				startA = filling*FULL_PIE - QUART, endA = (filling + slice)*FULL_PIE - QUART;
+
 			if (slice > 0) {
 				ctx.beginPath();
 				ctx.moveTo(centerX, centerY);
-				ctx.arc(centerX, centerY, radius,
-					counter * Math.PI * 2 - Math.PI * 0.5,
-					(counter + slice) * Math.PI * 2 - Math.PI * 0.5,
-					false);
+				ctx.arc(centerX, centerY, radius, startA, endA, false);
 				ctx.lineTo(centerX, centerY);
 				ctx.closePath();
 				ctx.fillStyle = o.colors[i % o.colors.length];
@@ -81,10 +84,10 @@
 			}
 
 			// Draw labels
-			var sliceMiddle = (counter + slice / 2);
+			var sliceMiddle = (filling + slice / 2);
 			var distance = o.pieLabelPos == 'inside' ? radius / 1.6 : radius + radius / 5;
-			var labelX = Math.round(centerX + Math.sin(sliceMiddle * Math.PI * 2) * (distance));
-			var labelY = Math.round(centerY - Math.cos(sliceMiddle * Math.PI * 2) * (distance));
+			var labelX = Math.round(centerX + Math.sin(sliceMiddle * FULL_PIE) * (distance));
+			var labelY = Math.round(centerY - Math.cos(sliceMiddle * FULL_PIE) * (distance));
 			var leftRight = (labelX > centerX) ? 'right' : 'left';
 			var topBottom = (labelY > centerY) ? 'bottom' : 'top';
 			var percentage = parseFloat((slice * 100).toFixed(2));
@@ -105,7 +108,7 @@
 					$label.css('color', o.textColors[i]);
 				}
 			}
-			counter += slice;
+			filling += slice;
 		}); // each slices
 
 	}; // pie
