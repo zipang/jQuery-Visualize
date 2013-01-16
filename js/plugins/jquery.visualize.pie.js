@@ -9,7 +9,8 @@
 		width: 250, height: 250, 
 		pieMargin:20, //pie charts only - spacing around pie
 		pieLabelsAsPercent:true,
-		pieLabelPos:'inside',		
+		pieLabelPos:'inside',
+		maxSlices: 12
 	};
 
 	var FULL_PIE  = Math.PI * 2, // 2*PI
@@ -49,6 +50,12 @@
 				slices = $.map(tabledata.columns, Array.sum);
 				keys = tabledata.columnHeaders;
 			}
+		}
+
+		// Deal with the unrepresentable (too much discret values)
+		if (slices.length > o.maxSlices) {
+			keys = ["Cannot represent more than " + o.maxSlices + " values (" + slices.length + ")"];
+			slices = [100];
 		}
 			
 		total = Array.sum(slices);
