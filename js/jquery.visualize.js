@@ -339,27 +339,24 @@
 			    colFilter = this.options.colFilter,
 			    lines = [], lineHeaders = [], columnHeaders = [],
 				cellParser = this.options.parser || function(x) {
-					return isNaN(x) ? x : parseFloat(x);
+					var val = parseFloat($.trim(x));
+					return isNaN(val) ? $.trim(x) : val;
 				},
-				$table = this.$table,
-				rows = this.dataTable ? 
-						$("thead tr", $table).not(".filters").add(this.dataTable.$("tr", {"filter":"applied"})) : 
-						$("tr", $table);
+				header = $("thead tr", this.$table).get(0),
+				rows   = this.dataTable ? this.dataTable.$("tr", {"filter":"applied"}) : $("tbody tr", $table);
+
+			$("td, th", header).each(function(i, td) {
+				columnHeaders.push($(td).text());
+			});
 
 			rows.filter(rowFilter).each(function (i, tr) {
-				var headers = [], cells = [];
-				$("th", $(tr)).filter(colFilter).each(function (j, th) {
-					headers.push($(th).text());
-				});
-				$("td", $(tr)).filter(colFilter).each(function (j, td) {
+				var cells = [];
+				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
 					cells.push(cellParser($(td).text()));
 				});
-				if (i == 0) {
-					columnHeaders = headers;
-				} else {
-					lineHeaders.push(headers[0] || cells[0]);
-					lines.push(cells);
-				}
+				lineHeaders.push(cells[0]);
+				lines.push(cells);
+
 				if (lineHeaders.length > 0) { // wheck that the column headers have the same length as the lines data
 					var firstDataLine = lines[0];
 					if (columnHeaders.length > firstDataLine.length) columnHeaders.shift();
@@ -523,8 +520,9 @@
 								$canvasContainer.trigger("refresh");
 							})
 							.on("sort", function(evt, settings) {
-								var columnIndex = settings.aaSorting[0][0];
-								o.column = $($("thead tr > *", $table)[columnIndex]).text(); // store the column name
+								var columnIndex = settings.aaSorting[0][0],
+									$header = $($("thead tr:first > *", $table)[columnIndex]);
+								o.column = $header.text(); // store the column name
 							})
 							.data("visualize-bound", true);
 
