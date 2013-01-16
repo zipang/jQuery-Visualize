@@ -40,8 +40,11 @@
 	$.debounce = function(fn, delay) {
 		var delay = delay || 250;
 		return function() {
+			var ctx = this, args = arguments;
 			clearTimeout(fn.hnd);
-			fn.hnd = setTimeout(fn, delay);
+			fn.hnd = setTimeout(function() {
+				fn.apply(ctx, args);
+			}, delay);
 		};
 	};
 
@@ -326,6 +329,7 @@
 			this.dataTable = this.$table.dataTable();
 		}
 		this.parse();
+		this.$table.data("visualize-data", this);
 	}
 
 	TableData.prototype = {
@@ -335,27 +339,24 @@
 			    colFilter = this.options.colFilter,
 			    lines = [], lineHeaders = [], columnHeaders = [],
 				cellParser = this.options.parser || function(x) {
-					return isNaN(x) ? x : parseFloat(x);
+					var val = parseFloat($.trim(x));
+					return isNaN(val) ? $.trim(x) : val;
 				},
-				$table = this.$table,
-				rows = this.dataTable ? 
-						$("thead tr", $table).add(this.dataTable.$("tr", {"filter":"applied"})) : 
-						$("tr", $table);
+				header = $("thead tr", this.$table).get(0),
+				rows   = this.dataTable ? this.dataTable.$("tr", {"filter":"applied"}) : $("tbody tr", $table);
+
+			$("td, th", header).each(function(i, td) {
+				columnHeaders.push($(td).text());
+			});
 
 			rows.filter(rowFilter).each(function (i, tr) {
-				var headers = [], cells = [];
-				$("th", $(tr)).filter(colFilter).each(function (j, th) {
-					headers.push($(th).text());
-				});
-				$("td", $(tr)).filter(colFilter).each(function (j, td) {
+				var cells = [];
+				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
 					cells.push(cellParser($(td).text()));
 				});
-				if (i == 0) {
-					columnHeaders = headers;
-				} else {
-					lineHeaders.push(headers[0]);
-					lines.push(cells);
-				}
+				lineHeaders.push(cells[0]);
+				lines.push(cells);
+
 				if (lineHeaders.length > 0) { // wheck that the column headers have the same length as the lines data
 					var firstDataLine = lines[0];
 					if (columnHeaders.length > firstDataLine.length) columnHeaders.shift();
@@ -387,7 +388,7 @@
 		 */
 		get: function(collection, name) {
 			var i = 0, lname = name.toLowerCase(), headers = this[(collection.toLowerCase() == "columns") ? "columnHeaders" : "lineHeaders"];
-			while (headers[i] && headers[i].toLowerCase() != lname) i++;
+			while (headers[i] !== undefined && headers[i].toLowerCase() != lname) i++;
 			return (i < headers.length) ? this[collection][i] : [];
 		}
 	}; // TableData prototype
@@ -519,8 +520,9 @@
 								$canvasContainer.trigger("refresh");
 							})
 							.on("sort", function(evt, settings) {
-								var columnIndex = settings.aaSorting[0][0];
-								o.column = $($("thead tr > *", $table)[columnIndex]).text(); // store the column name
+								var columnIndex = settings.aaSorting[0][0],
+									$header = $($("thead tr:first > *", $table)[columnIndex]);
+								o.column = $header.text(); // store the column name
 							})
 							.data("visualize-bound", true);
 
@@ -601,17 +603,22 @@
 (function define() {
 
 	var defaults = {
+		width: 250, height: 250, 
 		pieMargin:20, //pie charts only - spacing around pie
-		pieLabelsAsPercent:false,
-		pieLabelPos:'inside',		
+		pieLabelsAsPercent:true,
+		pieLabelPos:'inside',
+		maxSlices: 12
 	};
+
+	var FULL_PIE  = Math.PI * 2, // 2*PI
+		QUART = Math.PI * 0.5;   // PI/2
 	
 	$.visualize.plugins.pie = function () {
 
 		var o = this.options,
 			ctx = this.target.canvasContext,
 			$canvas = this.target.canvas,
-			w = $canvas.width(), h = $canvas.height(),
+			w = $canvas.width() || defaults.width, h = $canvas.height() || defaults.height,
 			tabledata = this.data;
 
 		// Let's gather the pie data
@@ -641,6 +648,12 @@
 				keys = tabledata.columnHeaders;
 			}
 		}
+
+		// Deal with the unrepresentable (too much discret values)
+		if (slices.length > o.maxSlices) {
+			keys = ["Cannot represent more than " + o.maxSlices + " values (" + slices.length + ")"];
+			slices = [100];
+		}
 			
 		total = Array.sum(slices);
 		this._keys = keys;
@@ -655,20 +668,19 @@
 
 		var centerX = Math.round(w / 2),
 			centerY = Math.round(h / 2),
-			radius = centerY - o.pieMargin,
-			counter = 0.0;
+			radius  = centerY - o.pieMargin,
+			filling = 0.0; // 0..1
 
 		$.each(slices, function (i, val) {
 
 			// Draw the pie pieces
-			var slice = (val <= 0 || isNaN(val)) ? 0 : val / total;
+			var slice = (val <= 0 || isNaN(val)) ? 0 : val / total,
+				startA = filling*FULL_PIE - QUART, endA = (filling + slice)*FULL_PIE - QUART;
+
 			if (slice > 0) {
 				ctx.beginPath();
 				ctx.moveTo(centerX, centerY);
-				ctx.arc(centerX, centerY, radius,
-					counter * Math.PI * 2 - Math.PI * 0.5,
-					(counter + slice) * Math.PI * 2 - Math.PI * 0.5,
-					false);
+				ctx.arc(centerX, centerY, radius, startA, endA, false);
 				ctx.lineTo(centerX, centerY);
 				ctx.closePath();
 				ctx.fillStyle = o.colors[i % o.colors.length];
@@ -676,10 +688,10 @@
 			}
 
 			// Draw labels
-			var sliceMiddle = (counter + slice / 2);
+			var sliceMiddle = (filling + slice / 2);
 			var distance = o.pieLabelPos == 'inside' ? radius / 1.6 : radius + radius / 5;
-			var labelX = Math.round(centerX + Math.sin(sliceMiddle * Math.PI * 2) * (distance));
-			var labelY = Math.round(centerY - Math.cos(sliceMiddle * Math.PI * 2) * (distance));
+			var labelX = Math.round(centerX + Math.sin(sliceMiddle * FULL_PIE) * (distance));
+			var labelY = Math.round(centerY - Math.cos(sliceMiddle * FULL_PIE) * (distance));
 			var leftRight = (labelX > centerX) ? 'right' : 'left';
 			var topBottom = (labelY > centerY) ? 'bottom' : 'top';
 			var percentage = parseFloat((slice * 100).toFixed(2));
@@ -700,7 +712,7 @@
 					$label.css('color', o.textColors[i]);
 				}
 			}
-			counter += slice;
+			filling += slice;
 		}); // each slices
 
 	}; // pie
