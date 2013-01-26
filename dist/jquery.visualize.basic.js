@@ -1,17 +1,17 @@
-/* --------------------------------------------------------------------
- * jQuery Visualize 'Extended' plugin
- *
- * Original Author: Scott Jehl, scott@filamentgroup.com
- * Copyright (c) 2009 Filament Group
- * licensed under MIT (filamentgroup.com/examples/mit-license.txt)
- *
- * Extended version
- * Author: Christophe Desguez, https://github.com/zipang
- * https://github.com/zipang/jQuery-Visualize
- * -------------------------------------------------------------------- */
-(function ($) {
-	$.visualize = {
-		plugins:{} // additional chart scripts will load themself inside this namespace
+/**
+ * Table Data Parser
+ * (This is the internal representation of tabular data used by jquery-visualize)
+ */
+(function(context, $) {
+
+	var defaults = {
+		rowFilter: "*",
+		colFilter: "*",
+		parser: function(x) {
+			var sData = $.trim(x),
+				nData = parseFloat(sData);
+			return isNaN(nData) ? sData : nData;
+		}
 	};
 
 	// UTILITIES
@@ -47,6 +47,107 @@
 			}, delay);
 		};
 	};
+
+	/**-------------------------------------------------------------------- *
+	 * TableData constructor
+	 * Example : new TableData(t)
+	 * -------------------------------------------------------------------- */
+	function TableData(table, options) {
+		this.$table = $(table);
+		this.options = $.extend({}, defaults, options);
+		// look for a dataTable extension on this table
+		if ($.fn.DataTable && $.fn.DataTable.fnIsDataTable(this.$table.get(0))) {
+			this.dataTable = this.$table.dataTable();
+		}
+		this.parse();
+		this.$table.data("visualize-data", this);
+	}
+
+	TableData.prototype = {
+
+		parse: function() {
+			var options = this.options,
+				rowFilter = options.rowFilter,
+			    colFilter = options.colFilter,
+			    lines = [], lineHeaders = [], columnHeaders = [],
+				cellParser = options.parser,
+				header = $("thead tr", this.$table).get(0),
+				rows   = this.dataTable ? this.dataTable.$("tr", {"filter":"applied"}) : $("tbody tr", this.$table);
+
+			$("td, th", header).each(function(i, td) {
+				columnHeaders.push($(td).text());
+			});
+
+			rows.filter(rowFilter).each(function (i, tr) {
+				var cells = [];
+
+				$("th, td", tr).filter(colFilter).each(function (j, cell) {
+					
+					if (j == 0 && cell.tagName == "TH") {
+						lineHeaders.push($(cell).text());
+					} else {
+						cells.push(cellParser($(cell).text()));	
+					}
+				});
+				
+				lines.push(cells);
+
+				if (lineHeaders.length > 0) { // check that the column headers have the same length as the lines data
+					var firstDataLine = lines[0];
+					if (columnHeaders.length > firstDataLine.length) columnHeaders.shift();
+				}
+			});
+
+			var lcount = lines.length,
+			    ccount = lines[0].length,
+			    columns = [];
+
+			for (var j = 0; j < ccount; j++) {
+				var columnValues = [];
+				for (var i = 0; i < lcount; i++) {
+					columnValues.push(lines[i][j]);
+				}
+				columns.push(columnValues);
+			}
+
+			this.lineHeaders = lineHeaders;
+			this.columnHeaders = columnHeaders;
+			this.lines = lines;
+			this.columns = columns;
+		},
+
+		/**
+		 * Retrieve a line or column from its name
+		 * @param collection : [columns|lines]
+		 * @param name : name of column or line to retrieve
+		 */
+		get: function(collection, name) {
+			var i = 0, lname = name.toLowerCase(), headers = this[(collection.toLowerCase() == "columns") ? "columnHeaders" : "lineHeaders"];
+			while (headers[i] !== undefined && headers[i].toLowerCase() != lname) i++;
+			return (i < headers.length) ? this[collection][i] : [];
+		}
+	}; // TableData prototype
+
+	context.TableData = TableData;
+	
+})(window, jQuery);
+
+/* --------------------------------------------------------------------
+ * jQuery Visualize 'Extended' plugin
+ *
+ * Original Author: Scott Jehl, scott@filamentgroup.com
+ * Copyright (c) 2009 Filament Group
+ * licensed under MIT (filamentgroup.com/examples/mit-license.txt)
+ *
+ * Extended version
+ * Author: Christophe Desguez, https://github.com/zipang
+ * https://github.com/zipang/jQuery-Visualize
+ * -------------------------------------------------------------------- */
+(function ($) {
+	$.visualize = {
+		plugins:{} // additional chart scripts will load themself inside this namespace
+	};
+
 
 	/**
 	 * Get a regular serie of numbers from
@@ -318,81 +419,6 @@
 	}; // DrawContext prototype
 
 
-	/**-------------------------------------------------------------------- *
-	 * Table scrapper object
-	 * -------------------------------------------------------------------- */
-	function TableData(table, options) {
-		this.$table = $(table);
-		this.options = options;
-
-		if (table.dataTableExt !== undefined) {
-			this.dataTable = this.$table.dataTable();
-		}
-		this.parse();
-		this.$table.data("visualize-data", this);
-	}
-
-	TableData.prototype = {
-
-		parse: function() {
-			var rowFilter = this.options.rowFilter,
-			    colFilter = this.options.colFilter,
-			    lines = [], lineHeaders = [], columnHeaders = [],
-				cellParser = this.options.parser || function(x) {
-					var val = parseFloat($.trim(x));
-					return isNaN(val) ? $.trim(x) : val;
-				},
-				header = $("thead tr", this.$table).get(0),
-				rows   = this.dataTable ? this.dataTable.$("tr", {"filter":"applied"}) : $("tbody tr", $table);
-
-			$("td, th", header).each(function(i, td) {
-				columnHeaders.push($(td).text());
-			});
-
-			rows.filter(rowFilter).each(function (i, tr) {
-				var cells = [];
-				$("th, td", $(tr)).filter(colFilter).each(function (j, td) {
-					cells.push(cellParser($(td).text()));
-				});
-				lineHeaders.push(cells[0]);
-				lines.push(cells);
-
-				if (lineHeaders.length > 0) { // wheck that the column headers have the same length as the lines data
-					var firstDataLine = lines[0];
-					if (columnHeaders.length > firstDataLine.length) columnHeaders.shift();
-				}
-			});
-
-			var lcount = lines.length,
-			    ccount = lines[0].length,
-			    columns = [];
-
-			for (var j = 0; j < ccount; j++) {
-				var columnValues = [];
-				for (var i = 0; i < lcount; i++) {
-					columnValues.push(lines[i][j]);
-				}
-				columns.push(columnValues);
-			}
-
-			this.lineHeaders = lineHeaders;
-			this.columnHeaders = columnHeaders;
-			this.lines = lines;
-			this.columns = columns;
-		},
-
-		/**
-		 * Retrieve a line or column from its name
-		 * @param collection : [columns|lines]
-		 * @param name : name of column or line to retrieve
-		 */
-		get: function(collection, name) {
-			var i = 0, lname = name.toLowerCase(), headers = this[(collection.toLowerCase() == "columns") ? "columnHeaders" : "lineHeaders"];
-			while (headers[i] !== undefined && headers[i].toLowerCase() != lname) i++;
-			return (i < headers.length) ? this[collection][i] : [];
-		}
-	}; // TableData prototype
-
 
 	/**-------------------------------------------------------------------- *
 	 * jQuery Visualize Plugin declaration
@@ -477,7 +503,7 @@
 					}
 
 					// Scrap the table, set up the drawing context
-					var tableData = new TableData($table, o),
+					var tableData = o.refresh ? new TableData($table, o) : $table.data("visualize-data") || new TableData($table, o),
 						drawContext = new DrawContext({
 							data: tableData,
 							target:{
@@ -487,6 +513,9 @@
 							},
 							options:o
 						});
+
+					// Store the TableData for nex use (unless we force refresh=true)
+					$table.data(tableData);
 
 					// Apply (draw) chart to this context
 					chart.apply(drawContext);
