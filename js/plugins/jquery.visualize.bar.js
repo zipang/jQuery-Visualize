@@ -4,24 +4,48 @@
  * Data series are represented by group of vertical bars on the same axis.
  */
 (function define() {
-	var bar = $.visualize.plugins.bar = function () {
+
+	var defaults = {
+		barGroupMargin:10,
+		barMargin:1 //space around bars (added to both sides of bar)
+	};
+
+	$.visualize.plugins.bar = function () {
 
 		var o = this.options,
-			ctx = this.target.canvasContext,
-			canvas = this.target.canvas,
-			w = canvas.width(), h = canvas.height(),
-			tableData = this.data,
+		    ctx = this.target.canvasContext,
+		    canvas = this.target.canvas,
+		    w = canvas.width(), h = canvas.height(),
+		    tableData = this.data;
 
-			data = (o.parseDirection == 'x') ? tableData.lines : tableData.columns,
-			max = Math.ceil(Array.max($.map(data, Array.max))),
-			min = Math.floor(Array.min($.map(data, Array.min))),
-			range = max - ((min > 0) ? (min = 0) : min),
+		if (o.column) {
+			// take data from only the designed column
+			var serie = tableData.get("columns", o.column),
+			    data  = (o.parseDirection == 'x') ? 
+			    	Array.map(serie, function(x) { return [x];}) : 
+			    	[serie],
+			    max = Math.ceil(Array.max(serie)),
+			    min = Math.floor(Array.min(serie)),
+			    range = max - ((min > 0) ? (min = 0) : min),
 
-			yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
-			xLabels = (o.parseDirection == 'x') ? tableData.columnHeaders : tableData.lineHeaders;
+			    yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
+			    xLabels = (o.parseDirection == 'x') ? [o.column] : tableData.lineHeaders;
 
-		// legend keys
-		this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;
+			// legend keys
+			this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : [o.column];
+
+		} else {
+			var	data = (o.parseDirection == 'x') ? tableData.lines : tableData.columns,
+			    max = Math.ceil(Array.max($.map(data, Array.max))),
+			    min = Math.floor(Array.min($.map(data, Array.min))),
+			    range = max - ((min > 0) ? (min = 0) : min),
+
+			    yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
+			    xLabels = (o.parseDirection == 'x') ? tableData.columnHeaders : tableData.lineHeaders;
+
+			// legend keys
+			this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;
+		}
 
 		// Display categories as X labels
 		this.drawXAxis(xLabels);
@@ -31,8 +55,8 @@
 
 		// iterate on the series and draw the bars
 		var xBandWidth = (xLabels.length != 0) ? w / xLabels.length : w,
-			yScale = (range != 0) ? h / range : h,
-			zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the Y axis
+		    yScale = (range != 0) ? h / range : h,
+		    zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the Y axis
 
 		for (var i = 0; i < data.length; i++) {
 			ctx.strokeStyle = o.colors[i];
@@ -49,5 +73,7 @@
 				ctx.closePath();
 			}
 		}
-	}
+	} // bar
+
+	$.visualize.plugins.bar.defaults = defaults;
 })();
