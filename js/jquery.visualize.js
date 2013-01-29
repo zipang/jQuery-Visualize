@@ -284,6 +284,29 @@
 		}
 	}; // DrawContext prototype
 
+	/**
+	 * Extract specific visualize options from HTML5 data attributes
+	 */
+	function visualizeOptions($target) {
+		var data = $target.data(), options = {};
+
+		for (var key in data) {
+			if (key.indexOf("visualize") == 0) {
+				var optionKey = key.substr(9,1).toLowerCase() + key.substr(10);
+				if (optionKey == "options") {
+					options = data[key];
+				} else {
+					options[optionKey] = data[key];	
+				}
+			}
+		}
+
+		if ($target.attr("width")) options.width = $target.attr("width");
+		if ($target.attr("height")) options.height = $target.attr("height");
+
+		return options;
+	}
+
 
 
 	/**-------------------------------------------------------------------- *
@@ -311,7 +334,38 @@
 		yLabelInterval:30 //distance between y labels
 	};
 
- 	$.fn.visualize = function(type, options, container) {
+	/**
+	 * Advanced visualize mode can bind a different graph to independant columns
+	 */
+	$.fn.visualizeColumns = function(options) {
+
+		var $tables = $(this);
+
+		$tables.each(function () {
+
+			var $table = $(this),
+				$colHeaders = $("thead th", $table);
+
+			$colHeaders.each(function(i, th) {
+				var target = $(th).data("visualize-target");
+
+				if (target) {
+					var $target = $("#" + target),
+					    options = visualizeOptions($target);
+					options.column = $(th).text();
+					$table.visualize(options, $target);
+				}
+			});
+				
+		})
+
+		return $tables; // Allows for usual jQuery chainability
+	};
+
+	/**
+	 * Bind one graphic visualization to some table's data
+	 */
+	$.fn.visualize = function(type, options, container) {
 
 		if (typeof(type) != "string") { // Support for the old call form : visualize(options, container)
 										// where options contains the type of the chart
@@ -320,7 +374,7 @@
 			type = options.type || defaults.type;
 		}
 
-		var $tables = $(this); // we may have more than one table in the selection
+		var $tables = $(this);
 
 		loadChart( // loading may be asynchrone
 			type,
@@ -380,7 +434,7 @@
 							options:o
 						});
 
-					// Store the TableData for nex use (unless we force refresh=true)
+					// Store the TableData for next use (unless we force refresh=true)
 					$table.data(tableData);
 
 					// Apply (draw) chart to this context
