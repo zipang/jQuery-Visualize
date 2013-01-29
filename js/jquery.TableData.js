@@ -36,6 +36,16 @@
 		var len = (arr && arr.length ? arr.length : 0);
 		return (len ? Array.sum(arr) / len : 0);
 	};
+	Array.map = Array.prototype.map ? 
+		function (arr, fn) {
+			return arr.map(fn);
+		} :
+		function (arr, fn) {
+			var len = arr.length, ret = new Array(len);
+			for (var i = 0; i < len; i++) ret[i] = fn(arr[i]);
+			return ret;
+		};
+
 
 	$.debounce = function(fn, delay) {
 		var delay = delay || 250;
