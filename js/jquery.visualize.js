@@ -337,7 +337,7 @@
 	/**
 	 * Advanced visualize mode can bind a different graph to independant columns
 	 */
-	$.fn.visualizeColumns = function(options) {
+	$.fn.visualizeColumns = function(opt) {
 
 		var $tables = $(this);
 
@@ -351,13 +351,14 @@
 
 				if (target) {
 					var $target = $("#" + target),
-					    options = visualizeOptions($target);
+					    options = $.extend({}, opt, visualizeOptions($target));
 					options.column = $(th).text();
+					options.visualizeColumns = true;
 					$table.visualize(options, $target);
 				}
 			});
 				
-		})
+		});
 
 		return $tables; // Allows for usual jQuery chainability
 	};
@@ -380,17 +381,17 @@
 			type,
 			function visualize(chart) {
 
-				//Merge configuration options
-				var o = $.extend({}, defaults, chart.defaults, options);
-
-				if (chart.parser) {
-					// the chart plugin may redefine its own parser function
-					o.parser = chart.parser;
-				}
-
 				$tables.each(function () {
 
 					var $table = $(this);
+
+					//Merge configuration options
+					var o = $.extend({}, defaults, chart.defaults, options, visualizeOptions($table));
+
+					if (chart.parser) {
+						// the chart plugin may redefine its own parser function
+						o.parser = chart.parser;
+					}
 
 					//reset width, height to numbers
 					var w = o.width  = parseFloat(o.width  || $table.width());
@@ -435,7 +436,7 @@
 						});
 
 					// Store the TableData for next use (unless we force refresh=true)
-					$table.data(tableData);
+					$table.data("visualize-data", tableData);
 
 					// Apply (draw) chart to this context
 					chart.apply(drawContext);
@@ -462,24 +463,29 @@
 						}
 					}
 
-					if (!$table.data("visualize-bound")) {
+					if (!$canvasContainer.data("visualize-bound")) {
 						// Attach the filter and sort events listeners
-						$table
-							.on("filter", function(evt, settings) {
-								$canvasContainer.trigger("refresh");
-							})
-							.on("sort", function(evt, settings) {
+						$table.on("filter", function(evt, settings) {
+							$canvasContainer.trigger("refresh");
+						});
+
+						if (!o.visualizeColumns) {
+							$table.on("sort", function(evt, settings) {
 								var columnIndex = settings.aaSorting[0][0],
 									$header = $($("thead tr:first > *", $table)[columnIndex]);
 								o.column = $header.text(); // store the column name
-							})
-							.data("visualize-bound", true);
-
+							});
+						}
+							
 						// Refresh chart on custom refresh event (debounced)
 						var refresh = $.debounce(function () {
+							console.log("refresh!");
+							o.refresh = true;
 							$table.visualize(type, o, $canvasContainer.empty());
 						});
-						$canvasContainer.on("refresh", refresh);
+						$canvasContainer
+							.on("refresh", refresh)
+							.data("visualize-bound", true);
 	
 					} // events bound
 
