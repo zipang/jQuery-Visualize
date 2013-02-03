@@ -36,6 +36,16 @@
 		var len = (arr && arr.length ? arr.length : 0);
 		return (len ? Array.sum(arr) / len : 0);
 	};
+	Array.map = Array.prototype.map ? 
+		function (arr, fn) {
+			return arr.map(fn);
+		} :
+		function (arr, fn) {
+			var len = arr.length, ret = new Array(len);
+			for (var i = 0; i < len; i++) ret[i] = fn(arr[i]);
+			return ret;
+		};
+
 
 	$.debounce = function(fn, delay) {
 		var delay = delay || 250;
@@ -418,6 +428,29 @@
 		}
 	}; // DrawContext prototype
 
+	/**
+	 * Extract specific visualize options from HTML5 data attributes
+	 */
+	function visualizeOptions($target) {
+		var data = $target.data(), options = {};
+
+		for (var key in data) {
+			if (key.indexOf("visualize") == 0) {
+				var optionKey = key.substr(9,1).toLowerCase() + key.substr(10);
+				if (optionKey == "options") {
+					options = data[key];
+				} else {
+					options[optionKey] = data[key];	
+				}
+			}
+		}
+
+		if ($target.attr("width")) options.width = $target.attr("width");
+		if ($target.attr("height")) options.height = $target.attr("height");
+
+		return options;
+	}
+
 
 
 	/**-------------------------------------------------------------------- *
@@ -445,7 +478,39 @@
 		yLabelInterval:30 //distance between y labels
 	};
 
- 	$.fn.visualize = function(type, options, container) {
+	/**
+	 * Advanced visualize mode can bind a different graph to independant columns
+	 */
+	$.fn.visualizeColumns = function(opt) {
+
+		var $tables = $(this);
+
+		$tables.each(function () {
+
+			var $table = $(this),
+				$colHeaders = $("thead th", $table);
+
+			$colHeaders.each(function(i, th) {
+				var target = $(th).data("visualize-target");
+
+				if (target) {
+					var $target = $("#" + target),
+					    options = $.extend({}, opt, visualizeOptions($target));
+					options.column = $(th).text();
+					options.visualizeColumns = true;
+					$table.visualize(options, $target);
+				}
+			});
+				
+		});
+
+		return $tables; // Allows for usual jQuery chainability
+	};
+
+	/**
+	 * Bind one graphic visualization to some table's data
+	 */
+	$.fn.visualize = function(type, options, container) {
 
 		if (typeof(type) != "string") { // Support for the old call form : visualize(options, container)
 										// where options contains the type of the chart
@@ -454,23 +519,23 @@
 			type = options.type || defaults.type;
 		}
 
-		var $tables = $(this); // we may have more than one table in the selection
+		var $tables = $(this);
 
 		loadChart( // loading may be asynchrone
 			type,
 			function visualize(chart) {
 
-				//Merge configuration options
-				var o = $.extend({}, defaults, chart.defaults, options);
-
-				if (chart.parser) {
-					// the chart plugin may redefine its own parser function
-					o.parser = chart.parser;
-				}
-
 				$tables.each(function () {
 
 					var $table = $(this);
+
+					//Merge configuration options
+					var o = $.extend({}, defaults, chart.defaults, options, visualizeOptions($table));
+
+					if (chart.parser) {
+						// the chart plugin may redefine its own parser function
+						o.parser = chart.parser;
+					}
 
 					//reset width, height to numbers
 					var w = o.width  = parseFloat(o.width  || $table.width());
@@ -514,8 +579,8 @@
 							options:o
 						});
 
-					// Store the TableData for nex use (unless we force refresh=true)
-					$table.data(tableData);
+					// Store the TableData for next use (unless we force refresh=true)
+					$table.data("visualize-data", tableData);
 
 					// Apply (draw) chart to this context
 					chart.apply(drawContext);
@@ -542,24 +607,29 @@
 						}
 					}
 
-					if (!$table.data("visualize-bound")) {
+					if (!$canvasContainer.data("visualize-bound")) {
 						// Attach the filter and sort events listeners
-						$table
-							.on("filter", function(evt, settings) {
-								$canvasContainer.trigger("refresh");
-							})
-							.on("sort", function(evt, settings) {
+						$table.on("filter", function(evt, settings) {
+							$canvasContainer.trigger("refresh");
+						});
+
+						if (!o.visualizeColumns) {
+							$table.on("sort", function(evt, settings) {
 								var columnIndex = settings.aaSorting[0][0],
 									$header = $($("thead tr:first > *", $table)[columnIndex]);
 								o.column = $header.text(); // store the column name
-							})
-							.data("visualize-bound", true);
-
+							});
+						}
+							
 						// Refresh chart on custom refresh event (debounced)
 						var refresh = $.debounce(function () {
+							console.log("refresh!");
+							o.refresh = true;
 							$table.visualize(type, o, $canvasContainer.empty());
 						});
-						$canvasContainer.on("refresh", refresh);
+						$canvasContainer
+							.on("refresh", refresh)
+							.data("visualize-bound", true);
 	
 					} // events bound
 
@@ -577,24 +647,48 @@
  * Data series are represented by group of vertical bars on the same axis.
  */
 (function define() {
-	var bar = $.visualize.plugins.bar = function () {
+
+	var defaults = {
+		barGroupMargin:10,
+		barMargin:1 //space around bars (added to both sides of bar)
+	};
+
+	$.visualize.plugins.bar = function () {
 
 		var o = this.options,
-			ctx = this.target.canvasContext,
-			canvas = this.target.canvas,
-			w = canvas.width(), h = canvas.height(),
-			tableData = this.data,
+		    ctx = this.target.canvasContext,
+		    canvas = this.target.canvas,
+		    w = canvas.width(), h = canvas.height(),
+		    tableData = this.data;
 
-			data = (o.parseDirection == 'x') ? tableData.lines : tableData.columns,
-			max = Math.ceil(Array.max($.map(data, Array.max))),
-			min = Math.floor(Array.min($.map(data, Array.min))),
-			range = max - ((min > 0) ? (min = 0) : min),
+		if (o.column) {
+			// take data from only the designed column
+			var serie = tableData.get("columns", o.column),
+			    data  = (o.parseDirection == 'x') ? 
+			    	Array.map(serie, function(x) { return [x];}) : 
+			    	[serie],
+			    max = Math.ceil(Array.max(serie)),
+			    min = Math.floor(Array.min(serie)),
+			    range = max - ((min > 0) ? (min = 0) : min),
 
-			yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
-			xLabels = (o.parseDirection == 'x') ? tableData.columnHeaders : tableData.lineHeaders;
+			    yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
+			    xLabels = (o.parseDirection == 'x') ? [o.column] : tableData.lineHeaders;
 
-		// legend keys
-		this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;
+			// legend keys
+			this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : [o.column];
+
+		} else {
+			var	data = (o.parseDirection == 'x') ? tableData.lines : tableData.columns,
+			    max = Math.ceil(Array.max($.map(data, Array.max))),
+			    min = Math.floor(Array.min($.map(data, Array.min))),
+			    range = max - ((min > 0) ? (min = 0) : min),
+
+			    yLabels = $.visualize.getRangeLabels(min, max, o.ticks),
+			    xLabels = (o.parseDirection == 'x') ? tableData.columnHeaders : tableData.lineHeaders;
+
+			// legend keys
+			this._keys = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;
+		}
 
 		// Display categories as X labels
 		this.drawXAxis(xLabels);
@@ -604,8 +698,8 @@
 
 		// iterate on the series and draw the bars
 		var xBandWidth = (xLabels.length != 0) ? w / xLabels.length : w,
-			yScale = (range != 0) ? h / range : h,
-			zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the Y axis
+		    yScale = (range != 0) ? h / range : h,
+		    zeroPos = h - ((min < 0) ? -min : 0) * yScale; // Position of the 0 on the Y axis
 
 		for (var i = 0; i < data.length; i++) {
 			ctx.strokeStyle = o.colors[i];
@@ -622,7 +716,9 @@
 				ctx.closePath();
 			}
 		}
-	}
+	} // bar
+
+	$.visualize.plugins.bar.defaults = defaults;
 })();
 /**
  * Pie charts for the jquery Visualize plugin 2.0
