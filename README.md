@@ -15,11 +15,33 @@ This _extended_ version adds the following features to the original :
 
 ##Quick Documentation
 
+###Invoking the `.visualize()` method on `<table>` elements
+
+Any table that contains suitable numeric data can be converted into a graph representing this data throught the invocation of the `.visualize()` method.
+
+The data visualization type must be passed, and some options specifics to each graph type provided.
+
+```javascript
+    // select every tables with the pie class and turn them into graph
+    $("table.pie").visualize("pie", {pieLabels: "inside"});
+```
+
+Note : passing a single option object with a `type` is equivalent.
+
+```javascript
+    // select every tables with the pie class and turn them into graph
+    $("table.pie").visualize({type: "pie", pieLabels: "inside"});
+
+```
+
+By default, the graph element will be appended just after the table element it depicts. But you can choose to provide the target to
+render it elsewhere..
+
 ###Passing options through `data-visualize-*` attributes
 
-Any option can be passed either through the option object or through a dedicated data attribute ibnside the 'visualize' namespace.
+Any option can be passed either through the `option` object or through a dedicated data attribute inside the `visualize` namespace.
 
-Example:
+####Example:
 
 ```html
 <table class="visualize"
@@ -35,8 +57,8 @@ Example:
         </tr>
     </thead>
     <tbody>
-
-    <tbody>
+        <!-- ...  -->    
+    </tbody>
 </table>
 ```
 
