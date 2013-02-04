@@ -1,35 +1,46 @@
-jQuery Visualize Plugin (_Extended_)
+jQuery Visualize Plugin _Extended_
 ==================================
 
 This repository contains a *complete* rewriting of the Visualize jQuery plugin code that was released by Filament Group, Inc. as part of their book [Designing with Progressive Enhancement](http://filamentgroup.com/dwpe).
 
 The original version is still developped and maintained by Filament [here](https://github.com/filamentgroup/jQuery-Visualize)
 
-This first new version, while still a work in progress adds the following features to the original :
-- add a plugin mechanism to extend the library with new charts.
-- several new chart
+This _extended_ version adds the following features to the original :
+- a plugin mechanism to extend the library with new charts.
+- several new charts
+- integration with the popular [DataTables] jquery component to dynamically re-render charts as the DataTable is filtered/re-ordered.
+- A new mechanism to individually bind charts to specific columns.
 
+[DataTables]: http://www.datatables.net/
+
+##Quick Documentation
+
+ou can refer to
 ##Plugin Development
 
-To create a new chart for the visualize plugin, just add it in the
-'$.visualize.plugins' namespace.
+New charts can be easily developped and loaded as visualize plugins.
+To do that, just add the new rendering functions to the '$.visualize.plugins' namespace.
 
 Example:
 ```javascript
 /**
  * My flashy chart for the jquery Visualize plugin
- *
- * Data are represented by random flash lights
+ * (Data are represented by random flash of lights)
  */
 $.visualize.plugins.flashy = function () {
 
+    // Get the drawing context (canvas and options)
     var o = this.options,
         container = this.target.canvasContainer,
         ctx = this.target.canvasContext,
         canvas = this.target.canvas;
 
-    /* ... */
+    /* do something awesome... */
 }
+
+// then..
+$("table.flashy").visualize("flashy");
+
 ```
 
 ##Road Map
