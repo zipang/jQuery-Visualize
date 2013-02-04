@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+	<title>Charting</title>
+	<link rel="stylesheet" href="../css/basic.css">
+	<link rel="stylesheet" href="../css/visualize.css">
+	<link rel="stylesheet" href="../css/visualize-dark.css">
+	<style>
+		.container {
+			width: 90%;
+			margin: 2em auto;
+		}
+		table:after {
+			clear: both;
+		}
+		.visualization {
+			float: left;
+		}
+
+	</style>
+
+</head>
+<body>
+
+<div class="container">
+
+	<table class="table">
+		<caption>2009 Employee Sales by Department</caption>
+		<thead>
+			<tr>
+				<td></td>
+				<th scope="col" data-visualize-target="vis-food">food</th>
+				<th scope="col" data-visualize-target="vis-auto">auto</th>
+				<th scope="col" data-visualize-target="vis-household">household</th>
+				<th scope="col" data-visualize-target="vis-furniture">furniture</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<th scope="row">Mary</th>
+				<td>190</td>
+				<td>160</td>
+				<td>40</td>
+				<td>120</td>
+			</tr>
+			<tr>
+				<th scope="row">Tom</th>
+				<td>3</td>
+				<td>40</td>
+				<td>30</td>
+				<td>45</td>
+			</tr>
+			<tr>
+				<th scope="row">Brad</th>
+				<td>10</td>
+				<td>180</td>
+				<td>10</td>
+				<td>85</td>
+			</tr>
+			<tr>
+				<th scope="row">Kate</th>
+				<td>40</td>
+				<td>80</td>
+				<td>90</td>
+				<td>25</td>
+			</tr>
+		</tbody>
+	</table>
+
+
+	<div id="vis-food" class="visualization" width="300" height="200" 
+		 data-visualize-type="pie"
+		 data-visualize-pie-labels-as-percent="false"
+		 data-visualize-pie-label-pos="outside">
+	</div>
+	<div id="vis-auto" class="visualization" width="300" height="200" 
+		 data-visualize-type="bar"
+		 data-visualize-bar-margin="3">
+	</div>
+	<div id="vis-household" class="visualization" width="300" height="200" 
+		 data-visualize-type="pie"
+		 data-visualize-pie-labels-as-percent="true"
+		 data-visualize-pie-label-pos="inside">
+	</div>
+	<div id="vis-furniture" class="visualization" width="300" height="200" 
+		 data-visualize-options='{
+		 	"type":"pie",
+		 	"labelsAsPercent":false,
+		 	"pieMargin":5
+		 }'>
+	</div>
+</div> <!-- .container -->
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.9.0.min.js"></script>
+<script type="text/javascript" src="../dist/jquery.visualize.pack.min.js"></script>
+<!-- <script type="text/javascript" src="../js/jquery.TableData.js"></script>
+<script type="text/javascript" src="../js/jquery.visualize.js"></script>
+<script type="text/javascript" src="../js/plugins/jquery.visualize.pie.js"></script>
+<script type="text/javascript" src="../js/plugins/jquery.visualize.bar.js"></script> -->
+
+
+<script type="text/javascript">
+	$("table").visualizeColumns();
+</script>
+</body>
+</html>
