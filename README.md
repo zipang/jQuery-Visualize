@@ -15,7 +15,31 @@ This _extended_ version adds the following features to the original :
 
 ##Quick Documentation
 
-ou can refer to
+###Passing options through `data-visualize-*` attributes
+
+Any option can be passed either through the option object or through a dedicated data attribute ibnside the 'visualize' namespace.
+
+Example:
+
+```html
+<table class="visualize"
+       data-visualize-type="pie" data-visualize-pie-margin="10" >
+    <caption>How to pass options through data- attributes</caption>
+    <thead>
+        <tr>
+            <td></td>
+            <th scope="col" data-visualize-target="vis-food">food</th>
+            <th scope="col" data-visualize-target="vis-auto">auto</th>
+            <th scope="col" data-visualize-target="vis-household">household</th>
+            <th scope="col" data-visualize-target="vis-furniture">furniture</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    <tbody>
+</table>
+```
+
 ##Plugin Development
 
 New charts can be easily developped and loaded as visualize plugins.
