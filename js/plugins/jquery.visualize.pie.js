@@ -92,7 +92,7 @@
 
 			// Draw labels
 			var sliceMiddle = (filling + slice / 2);
-			var distance = o.pieLabelPos == 'inside' ? radius / 1.6 : radius + radius / 5;
+			var distance = o.pieLabelPos == 'inside' ? radius * 0.75 : radius + o.pieMargin / 2;
 			var labelX = Math.round(centerX + Math.sin(sliceMiddle * FULL_PIE) * (distance));
 			var labelY = Math.round(centerY - Math.cos(sliceMiddle * FULL_PIE) * (distance));
 			var leftRight = (labelX > centerX) ? 'right' : 'left';
@@ -107,9 +107,9 @@
 					.append($label).appendTo(labels)
 					.css({left:labelX, top:labelY});
 				$label
-					.css('font-size', Math.min(radius / 10, 20))
-					.css('margin-' + leftRight, -$label.width() / 2)
-					.css('margin-' + topBottom, -$label.outerHeight() / 2);
+					.css('font-size', Math.max(Math.min(radius / 10, 20), 11));
+				// 	.css('margin-' + leftRight, -$label.width() / 2)
+				// 	.css('margin-' + topBottom, -$label.outerHeight() / 2);
 
 				if (o.textColors[i]) {
 					$label.css('color', o.textColors[i]);
