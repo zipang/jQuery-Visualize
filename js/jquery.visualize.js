@@ -381,10 +381,10 @@
 
 			var $table = $(this),
 				localParams = visualizeOptions($table),
-				type = type || localParams.type;
+				chartType = type || localParams.type;
 
 			loadChart( // loading may be asynchrone
-				type,
+				chartType,
 				function visualize(chart) {
 
 					//Merge all configuration options
@@ -408,7 +408,7 @@
 
 					//create canvas wrapper div, set inline w&h, append
 					var $canvasContainer = (container || $("<div>"))
-						.addClass("visualize").addClass("visualize-" + type)
+						.addClass("visualize").addClass("visualize-" + chartType)
 						.attr("role", "img").attr("aria-label", "Chart representing data from the table: " + title)
 						.height(h).width(w)
 						.append($canvas);
@@ -483,7 +483,7 @@
 						var refresh = $.debounce(function () {
 							console.log("refresh!");
 							o.refresh = true;
-							$table.visualize(type, o, $canvasContainer.empty());
+							$table.visualize(chartType, o, $canvasContainer.empty());
 						});
 						$canvasContainer
 							.on("refresh", refresh)
