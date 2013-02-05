@@ -372,21 +372,23 @@
 										// where options contains the type of the chart
 			container = options;
 			options = type || {};
-			type = options.type || defaults.type;
+			type = options.type;
 		}
 
 		var $tables = $(this);
 
-		loadChart( // loading may be asynchrone
-			type,
-			function visualize(chart) {
+		$tables.each(function () {
 
-				$tables.each(function () {
+			var $table = $(this),
+				localParams = visualizeOptions($table),
+				type = type || localParams.type;
 
-					var $table = $(this);
+			loadChart( // loading may be asynchrone
+				type,
+				function visualize(chart) {
 
-					//Merge configuration options
-					var o = $.extend({}, defaults, chart.defaults, options, visualizeOptions($table));
+					//Merge all configuration options
+					var o = $.extend({}, defaults, chart.defaults, options, localParams);
 
 					if (chart.parser) {
 						// the chart plugin may redefine its own parser function
@@ -488,12 +490,16 @@
 							.data("visualize-bound", true);
 	
 					} // events bound
-
-				}); // $tables.each()
-			}
-		);
+				} // visualize(chart)
+			); // loadChart()
+		}); // $tables.each()
 
 		return $tables; // Allows for usual jQuery chainability
 	};
+
+	// Automatic binding of table.visualize elements
+	$(function() {
+		$("table.visualize").visualize();
+	});
 
 })(jQuery);
