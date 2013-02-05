@@ -516,21 +516,23 @@
 										// where options contains the type of the chart
 			container = options;
 			options = type || {};
-			type = options.type || defaults.type;
+			type = options.type;
 		}
 
 		var $tables = $(this);
 
-		loadChart( // loading may be asynchrone
-			type,
-			function visualize(chart) {
+		$tables.each(function () {
 
-				$tables.each(function () {
+			var $table = $(this),
+				localParams = visualizeOptions($table),
+				chartType = type || localParams.type;
 
-					var $table = $(this);
+			loadChart( // loading may be asynchrone
+				chartType,
+				function visualize(chart) {
 
-					//Merge configuration options
-					var o = $.extend({}, defaults, chart.defaults, options, visualizeOptions($table));
+					//Merge all configuration options
+					var o = $.extend({}, defaults, chart.defaults, options, localParams);
 
 					if (chart.parser) {
 						// the chart plugin may redefine its own parser function
@@ -550,7 +552,7 @@
 
 					//create canvas wrapper div, set inline w&h, append
 					var $canvasContainer = (container || $("<div>"))
-						.addClass("visualize").addClass("visualize-" + type)
+						.addClass("visualize").addClass("visualize-" + chartType)
 						.attr("role", "img").attr("aria-label", "Chart representing data from the table: " + title)
 						.height(h).width(w)
 						.append($canvas);
@@ -625,20 +627,24 @@
 						var refresh = $.debounce(function () {
 							console.log("refresh!");
 							o.refresh = true;
-							$table.visualize(type, o, $canvasContainer.empty());
+							$table.visualize(chartType, o, $canvasContainer.empty());
 						});
 						$canvasContainer
 							.on("refresh", refresh)
 							.data("visualize-bound", true);
 	
 					} // events bound
-
-				}); // $tables.each()
-			}
-		);
+				} // visualize(chart)
+			); // loadChart()
+		}); // $tables.each()
 
 		return $tables; // Allows for usual jQuery chainability
 	};
+
+	// Automatic binding of table.visualize elements
+	$(function() {
+		$("table.visualize").visualize();
+	});
 
 })(jQuery);
 /**
@@ -814,7 +820,7 @@
 
 			// Draw labels
 			var sliceMiddle = (filling + slice / 2);
-			var distance = o.pieLabelPos == 'inside' ? radius / 1.6 : radius + radius / 5;
+			var distance = o.pieLabelPos == 'inside' ? radius * 0.75 : radius + o.pieMargin / 2;
 			var labelX = Math.round(centerX + Math.sin(sliceMiddle * FULL_PIE) * (distance));
 			var labelY = Math.round(centerY - Math.cos(sliceMiddle * FULL_PIE) * (distance));
 			var leftRight = (labelX > centerX) ? 'right' : 'left';
@@ -829,9 +835,9 @@
 					.append($label).appendTo(labels)
 					.css({left:labelX, top:labelY});
 				$label
-					.css('font-size', Math.min(radius / 10, 20))
-					.css('margin-' + leftRight, -$label.width() / 2)
-					.css('margin-' + topBottom, -$label.outerHeight() / 2);
+					.css('font-size', Math.max(Math.min(radius / 10, 20), 11));
+				// 	.css('margin-' + leftRight, -$label.width() / 2)
+				// 	.css('margin-' + topBottom, -$label.outerHeight() / 2);
 
 				if (o.textColors[i]) {
 					$label.css('color', o.textColors[i]);
