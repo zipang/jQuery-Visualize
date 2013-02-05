@@ -23,7 +23,7 @@
 .visualize-pie .visualize-labels { list-style: none; }
 .visualize-pie .visualize-label-pos, .visualize-pie .visualize-label { position: absolute;  margin: 0; padding:0; }
 .visualize-pie .visualize-label { display: block; color: #fff; font-weight: bold; font-size: 1em; }
-.visualize-pie-outside .visualize-label { color: #000; font-weight: normal; }
+.visualize-pie-outside .visualize-label { font-weight: normal; }
 
 /*line,bar, area labels*/
 .visualize-labels-x,.visualize-labels-y { position: absolute; left: 0; top: 0; list-style: none; }
