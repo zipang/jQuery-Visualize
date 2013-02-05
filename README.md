@@ -19,6 +19,8 @@ This _extended_ version adds the following features to the original :
 
 Any table that contains suitable numeric data can be converted into a graph representing this data throught the invocation of the `.visualize()` method.
 
+Serie's labels _must_ be defined as proper table column (`th scope='col'`) and line (`th scope='line'`) headers.
+
 The data visualization type must be passed, and some options specifics to each graph type provided.
 
 ```javascript
@@ -45,15 +47,17 @@ Any option can be passed either through the `option` object or through a dedicat
 
 ```html
 <table class="visualize"
-       data-visualize-type="pie" data-visualize-pie-margin="10" >
+       data-visualize-type="pie" 
+       data-visualize-pie-margin="40" 
+       data-visualize-pie-labels-as-percent="false" >
     <caption>How to pass options through data- attributes</caption>
     <thead>
         <tr>
             <td></td>
-            <th scope="col" data-visualize-target="vis-food">food</th>
-            <th scope="col" data-visualize-target="vis-auto">auto</th>
-            <th scope="col" data-visualize-target="vis-household">household</th>
-            <th scope="col" data-visualize-target="vis-furniture">furniture</th>
+            <th scope="col">Food</th>
+            <th scope="col">Auto</th>
+            <th scope="col">Household</th>
+            <th scope="col">Furniture</th>
         </tr>
     </thead>
     <tbody>
@@ -62,10 +66,26 @@ Any option can be passed either through the `option` object or through a dedicat
 </table>
 ```
 
-##Plugin Development
+    And if you added the 'visualize' class to your table, that's all ! You don't even need to write any JavaScript !
+
+###Distribution
+
+Compacted and minified packages of the library can be found inside the `dist/` repository.
+
+* `jquery.visualize.basic.js`
+* `jquery.visualize.basic.min.js`
+* `jquery.visualize.pack.js` 
+* `jquery.visualize.pack.min.js`
+
+
+To update the distribution, just call the `> make all` command on the project's root.
+
+##Developpers notes
+
+###Plugin Development
 
 New charts can be easily developped and loaded as visualize plugins.
-To do that, just add the new rendering functions to the '$.visualize.plugins' namespace.
+To do that, just add the new rendering functions to the `$.visualize.plugins` namespace.
 
 Example:
 ```javascript
@@ -89,13 +109,7 @@ $("table.flashy").visualize("flashy");
 
 ```
 
-##Road Map
-We are now working on the experimental branch on a complete rewriting of this project to support these features :
-- Add a well structured and programmable Data structure that will contain the data to render, and will permit us to initialize the data with various data sources.
-- Break the code in separate modules to be able to independantly tests each features, add readability to the code, and be evolutive.
-- Add a facility layer on top of the canvas element to provide the developper with a more friendly and fun API to develop new charts.
-- Add a bridge towards more complete chart tools like Google charts or jqPlots
-- Keep the compatibility and ease of use of the original jQuery Visualize plugin (should not require any code change except the include source)
+##Acknowledgement
 
 This work has been made possible with the help of [Profeci](http://profeci.eu), a french company that specializes in Data Knowledge and allready uses this new version to display great data reporting.
 
