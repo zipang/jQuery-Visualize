@@ -26,7 +26,7 @@
 		this.drawXAxis(xLabels);
 
 		// Display categories as Y labels
-		this.drawYAxis(yLabels, {drawLines: true});
+		this.drawYAxis(yLabels, {drawLines: true, fromTop: true});
 
 		// iterate on the series and draw the bars
 		var xScale = (range != 0) ? w / range : w,
