@@ -40,14 +40,14 @@
 			xLabels = $.visualize.getRangeLabels(0, dataRange, o.ticks),
 			yLabels = (o.parseDirection == 'x') ? tableData.lineHeaders : tableData.columnHeaders;
 
-		this._keys = (o.parseDirection == 'x') ? tabledata.columnHeaders : tabledata.lineHeaders;
+		this._keys = (o.parseDirection == 'x') ? tableData.columnHeaders : tableData.lineHeaders;
 
 		// Display data range as X labels
 		var xAxisOptions = (o.normalize ? {format: function(label) {return label+'%';}} : {});
 		this.drawXAxis(xLabels, xAxisOptions);
 
 		// Display categories as Y labels
-		this.drawYAxis(yLabels);
+		this.drawYAxis(yLabels, {drawLines: true, fromTop: true});
 
 		// Iterate and draw the series of bars
 		var xScale = (dataRange != 0) ? w / dataRange : w,
@@ -56,7 +56,7 @@
 		for (var i = 0; i < data.length; i++) {
 			ctx.lineWidth  = yInterval - ((o.barMargin+o.barGroupMargin)*2);
 
-			var serie = data[i], xPos = 0, yPos = h - yInterval*i - yInterval/2;
+			var serie = data[i], xPos = 0, yPos = yInterval*i + yInterval/2;
 			var xFactor = o.normalize ? (100 / Array.sum(serie)) : 1;
 
 			for (var j = 0; j < serie.length; j++) {
