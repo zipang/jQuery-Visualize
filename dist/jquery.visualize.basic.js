@@ -761,7 +761,7 @@
 				stats = {};
 			$.each(input, function(i, dat) {
 				if (type == "value") { // take this value
-					stats[tabledata.lineHeaders[i]] = dat;
+					stats[tabledata.lineHeaders[i] || tabledata.lines[i][0]] = dat;
 				} else { // count the number of items with the same value
 					if (!stats[dat]) stats[dat] = 1; else stats[dat] += 1;
 				}
